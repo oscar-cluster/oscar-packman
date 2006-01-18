@@ -5,8 +5,8 @@
 
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman-depman
-Version:   		1.44
-Release:   		2
+Version:   		2.0
+Release:   		1
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:		OSCAR
 Packager:		Erich Focht <efocht@hpce.nec.com>

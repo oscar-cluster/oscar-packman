@@ -1,8 +1,10 @@
 package PackMan::RPM;
 
 # Copyright (c) 2003-2004 The Trustees of Indiana University.
+# Copyright (c) 2006      Erich Focht <efocht@hpce.nec.com>
 #                         All rights reserved.
 #
+# $Id$
 
 use strict;
 use warnings;
@@ -98,6 +100,41 @@ sub query_version_command_line {
 # How rpm(8) changes root
 sub chroot_arg_command_line {
   '--root #chroot'
+}
+
+# How yume changes root
+sub smart_chroot_arg_command_line {
+    '--installroot #chroot'
+}
+
+# How yume handles one repository
+sub repo_arg_command_line {
+    '--repo #repo'
+}
+
+# How yume installs packages
+sub smart_install_command_line {
+    1,'yume #repos -- -y #chroot install #args'
+}
+
+# How yume removes packages
+sub smart_remove_command_line {
+    1,'yume #repos -- -y #chroot remove #args'
+}
+
+# How yume updates packages
+sub smart_update_command_line {
+    1,'yume #repos -- -y #chroot update #args'
+}
+
+# Clear yum caches
+sub do_clean {
+    return system("yum clean all");
+}
+
+# Generate repository caches
+sub gencache_command_line {
+    0,'yume #repos --prepare'
 }
 
 1;
