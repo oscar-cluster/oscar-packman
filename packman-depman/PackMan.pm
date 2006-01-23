@@ -14,7 +14,7 @@ use File::Spec;
 use Data::Dumper;
 
 our $VERSION;
-$VERSION = "r" . q$Rev: 19 $ =~ /(\d+)/;
+$VERSION = "r" . q$Rev$ =~ /(\d+)/;
 
 # concrete package manager order of preference, for breaking ties on systems
 # where multiple package manager modules might claim usability.

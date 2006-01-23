@@ -12,7 +12,7 @@ use warnings;
 use Carp;
 
 our $VERSION;
-$VERSION = "r" . q$Rev: 19 $ =~ /(\d+)/;
+$VERSION = "r" . q$Rev$ =~ /(\d+)/;
 
 # Must use this form due to compile-time checks by PackMan.
 use base qw(PackMan);
@@ -229,7 +229,14 @@ PackMan::RPM - Perl extension for Package Manager abstraction for RPMs
   specific package manager, the tokens can be placed anywhere after
   the first whitespace character (after the package manager's name).
 
-  I used the long format arguments in this example. A package manager
+  Since the introduction of support for smart package managers like yum
+  two additional tokens have been added: #repos and #repo. #repo will be
+  replaced by the particular repository URL in the repo_arg_command_line
+  string. The replaced string, possibly built out of multiple such
+  replacements for multiple repositories, will replace the #repos token in
+  the smart commands which require repository arguments.
+
+  The long format arguments were used in this example. A package manager
   abstraction module author is, of course, free to implement his
   abstraction any way he wishes. So long as it inherits from PackMan
   and is located under the PackMan directory, PackMan will be able to
@@ -255,10 +262,12 @@ PackMan::RPM - Perl extension for Package Manager abstraction for RPMs
 
   Jeff Squyres, E<lt>jsquyres@lam-mpi.orgE<gt>
   Matt Garrett, E<lt>magarret@OSL.IU.eduE<gt>
+  Erich Focht,  E<lt>efocht@hpce.nec.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
   Copyright (c) 2003-2004 The Trustees of Indiana University.
                           All rights reserved.
+  Copyright (c) 2006 Erich Focht
 
 =cut
