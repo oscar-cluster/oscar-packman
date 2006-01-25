@@ -134,7 +134,7 @@ sub do_clean {
 
 # Generate repository caches
 sub gencache_command_line {
-    0,'yume #repos --prepare'
+    1,'yume #repos --prepare'
 }
 
 1;
