@@ -407,7 +407,7 @@ sub query_installed {
     # filter routine to be used as temporary callback
     sub filter_installed {
 	my ($line, $installed, $not_installed) = @_;
-	if ($line =~ m/^\w+\s+(\w*)\W/) {
+	if ($line =~ m/^\w+\s+(\S+)\s/) {
 	    # horrible kludge alert!
 	    # assumes second whitespace delimited field is our argument name
 	    push @{$not_installed}, $1;
