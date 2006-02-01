@@ -1,6 +1,7 @@
 package PackMan::RPM;
 
 # Copyright (c) 2003-2004 The Trustees of Indiana University.
+#
 # Copyright (c) 2006      Erich Focht <efocht@hpce.nec.com>
 #                         All rights reserved.
 #
@@ -32,44 +33,37 @@ sub RPM {
 }
 
 # Called by PackMan->new to determine which installed concrete PackMan handler
-# claims to be able to manage packages on the target system. Args are the
-# root directory being passed to the PackMan constructor.
+# claims to be able to manage packages on the target system.
+# Passed argument: the root directory being passed to the PackMan constructor.
+# If undef, the current "/" filesystem is probed.
 sub usable {
 
-  my @DISTROFILES = qw( fedora-release
-                        mandrake-release
-                        mandrakelinux-release
-			mandriva-release
-                        redhat-release
-                        redhat-release-as
-                        aaa_version
-                        aaa_base
-                        sl-release
-                        centos-release
-                      );
+    ref (shift) and croak ("usable is a class method");
+    my $chroot = shift;
 
-  ref (shift) and croak ("usable is a class method");
-  my $chroot = shift;
-  my $rc;
-
-  if (defined $chroot) {
-    if (! ($chroot =~ '^/')) {
-      croak ("chroot argument must be an absolute path.");
-    }
-  }
-
-  foreach my $distro (@DISTROFILES) {
+    my $chrootcmd = "";
     if (defined $chroot) {
-      $rc = system ("rpm --query --root=${chroot} ${distro} > /dev/null 2>&1");
-    } else {
-      $rc = system ("rpm --query ${distro} > /dev/null 2>&1");
+	if (! ($chroot =~ '^/')) {
+	    croak("chroot argument must be an absolute path.");
+	}
+	$chrootcmd = "chroot $chroot";
     }
-    if (($rc / 256) == 0) {
-      return (1);
-    }
-  }
 
-  return (0);
+    # is rpm installed an in the path?
+    my $rpm = system("$chrootcmd rpm --help >/dev/null 2>&1");
+
+    # is yume installed an in the path?
+    my $yume = system("$chrootcmd yume --help >/dev/null 2>&1");
+
+    if (!$rpm && !$yume) {
+	return 1;
+    }
+    return 0;
+}
+
+# has smart package manager
+sub is_smart {
+    return 1;
 }
 
 # How rpm(8) installs packages (aggregatable)

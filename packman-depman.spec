@@ -5,8 +5,8 @@
 
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman-depman
-Version:   		2.0
-Release:   		2
+Version:   		2.2
+Release:   		1
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:		OSCAR
 Packager:		Erich Focht <efocht@hpce.nec.com>
@@ -86,6 +86,9 @@ interface. RPMs part.
 
 
 %changelog
+* Wed Feb 1 2006 Erich Focht
+- added yume support and improved module recognition. Now
+there is no need for checks for distro release files.
 * Tue Nov 1 2005 Fernando Camargos <fernando@revolutionlinux.com>
 - added Mandriva support (mandriva-release)
 - changed extension of %files to * instead of gz so they can be rebuilded by Mandriva distros

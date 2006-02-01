@@ -293,6 +293,14 @@ sub do_simple_command {
     $callback = $self->{Callback} if (defined($self->{Callback}));
     $cbargs = $self->{Callback_Args} if (defined($self->{Callback_Args}));
 
+
+    # This is a hack to let the child behave as if it runs in a tty
+    # Without it yum doesn't show progress information.
+    my $pty = "/usr/bin/ptty_try";
+    if (-x $pty) {
+	$command = "$pty $command";
+    }
+
     if ($aggregatable) {
 	@captured_output = undef;
 	my $all_args = join " ", @lov;
@@ -300,27 +308,36 @@ sub do_simple_command {
 
 	my $pid = open(SYSTEM, "-|");
 	defined ($pid) or die "can't fork: $!";
+
 	if ($pid) {
+	    #
+	    # parent
+	    #
 	    while ($line = <SYSTEM>) {
-		chomp $line;
-		push @captured_output, $line;
-		if ($callback) {
-		    &{$callback}($line, @{$cbargs});
-		}
+	    	chomp $line;
+	    	push @captured_output, $line;
+	    	if ($callback) {
+	    	    &{$callback}($line, @{$cbargs});
+	    	}
 	    }
-	    close (SYSTEM);
+	    close SYSTEM;
 	    my $err = $?;
 	    if ($retval == 0) {
 		$retval = $err;
 	    }
 	} else {
-	    exec ($command, split /\s+/, $cl) or die "can't exec program: $!";
+	    #
+	    # child
+	    #
+
+	    exec ("$command $cl") or die "can't exec program: $!";
 	}
     } else {
 	foreach my $package (@lov) {
 	    @captured_output = undef;
 	    my $pid = open (SYSTEM, "-|");
 	    defined ($pid) or die "cannot fork: $!";
+	    select SYSTEM; $| = 1;  # try to make unbuffered
 	    if ($pid) {
 		while ($line = <SYSTEM>) {
 		    chomp $line;
