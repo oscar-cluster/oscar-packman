@@ -178,6 +178,18 @@ sub repo {
     }
 }
 
+# Set the Progress instance variable for this object.
+# Non-zero argument enables builtin progress output.
+# No argument disables progress output.
+sub progress {
+    ref (my $self = shift) or croak "progress is an instance method";
+    if (@_) {
+	$self->{Progress} = 1;
+    } else {
+	undef $self->{Progress};
+    }
+}
+
 # Register an output filter callback. This routine will be called for
 # every output line captured during do_simple_command.
 # Usage:
@@ -316,6 +328,7 @@ sub do_simple_command {
 	    while ($line = <SYSTEM>) {
 	    	chomp $line;
 	    	push @captured_output, $line;
+		$self->progress_handler($line) if (exists($self->{Progress}));
 	    	if ($callback) {
 	    	    &{$callback}($line, @{$cbargs});
 	    	}
@@ -342,6 +355,7 @@ sub do_simple_command {
 		while ($line = <SYSTEM>) {
 		    chomp $line;
 		    push @captured_output, $line;
+		    &progress_handler($line) if (exists($self->{Progress}));
 		    if ($callback) {
 			&{$callback}($line, @{$cbargs});
 		    }

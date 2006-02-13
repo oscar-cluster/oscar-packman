@@ -66,6 +66,36 @@ sub is_smart {
     return 1;
 }
 
+# default handler for progress-meter
+# - prints 
+sub progress_handler {
+    my $self = shift;
+    my ($line) = @_;
+    my $value = $self->{progress_value};
+    my ($lines_so_far, $totallines);
+    if ($line =~ /Setting up/) {
+	$value = 2;
+    } elsif ($line =~ /Resolving Dependencies/) {
+	$value = 6;
+    } elsif ($line =~ /Dependencies Resolved/) {
+	$value = 15;
+    }
+    if ($line =~ /done (\d+)\/(\d+)[^\d]/) {
+	$lines_so_far = $1;
+	$totallines = $2;
+    } elsif ($line =~ /Installing:.*\[\s*(\d+)\s*\/\s*(\d+)\s*\]/) {
+	$lines_so_far = $1;
+	$totallines = $2;
+    }
+    if ($totallines) {
+	#print "totallines,lines_so_far = $totallines,$lines_so_far\n";
+	$value = 15 + (100 - 15) * $lines_so_far / $totallines;
+	$value = 100 if $value > 100;
+    }
+    $self->{progress_value} = $value;
+    printf "[progress: %d]\n", $value;
+}
+
 # How rpm(8) installs packages (aggregatable)
 sub install_command_line {
   1, 'rpm --install -vh #args'
