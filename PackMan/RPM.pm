@@ -138,17 +138,17 @@ sub repo_arg_command_line {
 
 # How yume installs packages
 sub smart_install_command_line {
-    1,'yume #repos -- -y #chroot install #args'
+    1,'yume #repos -y #chroot install #args'
 }
 
 # How yume removes packages
 sub smart_remove_command_line {
-    1,'yume #repos -- -y #chroot remove #args'
+    1,'yume #repos -y #chroot remove #args'
 }
 
 # How yume updates packages
 sub smart_update_command_line {
-    1,'yume #repos -- -y #chroot update #args'
+    1,'yume #repos -y #chroot update #args'
 }
 
 # Clear yum caches

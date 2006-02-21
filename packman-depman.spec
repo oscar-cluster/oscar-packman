@@ -5,7 +5,7 @@
 
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman-depman
-Version:   		2.3
+Version:   		2.4
 Release:   		1
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:		OSCAR
@@ -86,6 +86,8 @@ interface. RPMs part.
 
 
 %changelog
+* Tue Feb 21 2006 Erich Focht
+- removed "--" from yume options, some versions don't like it
 * Wed Feb 1 2006 Erich Focht
 - added yume support and improved module recognition. Now
 there is no need for checks for distro release files.
