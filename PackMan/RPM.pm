@@ -71,6 +71,10 @@ sub is_smart {
 sub progress_handler {
     my $self = shift;
     my ($line) = @_;
+    if ($line =~ /^Error:/) {
+	return 1;
+    }
+    return 0 if (!exists($self->{Progress}));
     my $value = $self->{progress_value};
     my ($lines_so_far, $totallines);
     if ($line =~ /Setting up/) {
@@ -92,8 +96,11 @@ sub progress_handler {
 	$value = 15 + (100 - 15) * $lines_so_far / $totallines;
 	$value = 100 if $value > 100;
     }
-    $self->{progress_value} = $value;
-    printf "[progress: %d]\n", $value;
+    if ($value) {
+	$self->{progress_value} = $value;
+	printf "[progress: %d]\n", $value;
+    }
+    return 0;
 }
 
 # How rpm(8) installs packages (aggregatable)

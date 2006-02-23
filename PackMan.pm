@@ -313,6 +313,7 @@ sub do_simple_command {
 	$command = "$pty $command";
     }
 
+    my $rr = 0;
     if ($aggregatable) {
 	@captured_output = undef;
 	my $all_args = join " ", @lov;
@@ -328,7 +329,8 @@ sub do_simple_command {
 	    while ($line = <SYSTEM>) {
 	    	chomp $line;
 	    	push @captured_output, $line;
-		$self->progress_handler($line) if (exists($self->{Progress}));
+		$rr = $self->progress_handler($line);
+		$retval = 1 if ($rr);
 	    	if ($callback) {
 	    	    &{$callback}($line, @{$cbargs});
 	    	}
@@ -355,7 +357,8 @@ sub do_simple_command {
 		while ($line = <SYSTEM>) {
 		    chomp $line;
 		    push @captured_output, $line;
-		    &progress_handler($line) if (exists($self->{Progress}));
+		    $rr = $self->progress_handler($line);
+		    $retval = 1 if ($rr);
 		    if ($callback) {
 			&{$callback}($line, @{$cbargs});
 		    }
