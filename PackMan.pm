@@ -375,7 +375,7 @@ sub do_simple_command {
 	    }
 	}
     }
-    return (($retval?undef:1), @captured_output);
+    return (($retval?0:1), @captured_output);
 }
 
 # Command the underlying package manager to install each of the package files
