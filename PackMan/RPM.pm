@@ -71,7 +71,7 @@ sub is_smart {
 sub progress_handler {
     my $self = shift;
     my ($line) = @_;
-    if ($line =~ /^Error:/) {
+    if ($line =~ /^Error:/ || $line =~ /^ERROR:/ || $line =~ /^failure:/) {
 	return 1;
     }
     return 0 if (!exists($self->{Progress}));
@@ -97,8 +97,11 @@ sub progress_handler {
 	$value = 100 if $value > 100;
     }
     if ($value) {
-	$self->{progress_value} = $value;
-	printf "[progress: %d]\n", $value;
+	my $ovalue = $self->{progress_value};
+	if ($ovalue != $value) {
+	    $self->{progress_value} = $value;
+	    printf "[progress: %d]\n", $value;
+	}
     }
     return 0;
 }

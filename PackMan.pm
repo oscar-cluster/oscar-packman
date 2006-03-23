@@ -185,6 +185,7 @@ sub progress {
     ref (my $self = shift) or croak "progress is an instance method";
     if (@_) {
 	$self->{Progress} = 1;
+	$self->{progress_value} = 0;
     } else {
 	undef $self->{Progress};
     }
