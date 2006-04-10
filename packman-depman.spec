@@ -5,7 +5,7 @@
 
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman-depman
-Version:   		2.6
+Version:   		2.7
 Release:   		1
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:		OSCAR
@@ -30,7 +30,7 @@ BuildArch:		noarch
 %description
 A collection of Perl object modules for use in the OSCAR framework (among
 other places) to facilitate the transparent utilization of the native
-underlying package manader and dependency manager infrastructure across a wide
+underlying package manager and dependency manager infrastructure across a wide
 range of Linux/UNIX Operating System distributions through a standardized
 interface.
 
@@ -86,6 +86,10 @@ interface. RPMs part.
 
 
 %changelog
+* Mon Apr 10 2006 Erich Focht
+- added repo_export and repo_unexport methods.
+- repository export/unexport routines come from yume and can now be shared
+with debian routines, too.
 * Tue Feb 21 2006 Erich Focht
 - removed "--" from yume options, some versions don't like it
 * Wed Feb 1 2006 Erich Focht

@@ -21,6 +21,8 @@ $VERSION = "r" . q$Rev$ =~ /(\d+)/;
 # see below
 my @preference;
 
+my $verbose = $ENV{PACKMAN_VERBOSE};
+
 # populated by BEGIN block with keys usable in @preference and values of
 # where each PackMan module is located
 my %concrete;
@@ -560,6 +562,154 @@ sub gencache {
     ref (my $self = shift) or croak "gencache is an instance method";
     return ($self->do_simple_command ('gencache', @_));
 }
+
+# ###
+# Functiones for exporting repositories via HTTPD
+# These were taken from "yume" such that other package managers
+# can also make use of them. [Erich Focht, 2006]
+# Most of these are not "methods" but "functions", because yume uses
+# them without creating packman instances.
+# ###
+
+# export repositories belonging to the current packman instance
+# through httpd
+sub repo_export {
+    ref (my $self = shift) or croak "repo_export is an instance method";
+    return add_httpd_conf(@{$self->{Repos}});
+}
+
+# unexport repositories belonging to the current packman instance
+# through httpd
+sub repo_unexport {
+    ref (my $self = shift) or croak "repo_unexport is an instance method";
+    return del_httpd_conf(@{$self->{Repos}});
+}
+
+# locate httpd configuration directory
+# this is somewhat hardwired and might need to be extended
+sub find_httpdir {
+    my $httpdir;
+    for my $d ("httpd", "apache", "apache2") {
+	if (-d "/etc/$d/conf.d") {
+	    $httpdir = "/etc/$d/conf.d";
+	    last;
+	}
+    }
+    if ($verbose) {
+	print "Found httpdir = $httpdir\n";
+    }
+    return $httpdir;
+}
+
+sub add_httpd_conf {
+    my (@repos) = @_;
+    my $httpdir = find_httpdir();
+    my $changed = 0;
+    my $err = 0;
+    if ($httpdir) {
+	for my $repo (@repos) {
+	    if ($repo =~ /^(file:\/|\/)/) {
+		$repo =~ s|^file:||;
+		if (!-d $repo) {
+		    print "Could not find directory $repo. Skipping.\n";
+		    $err++;
+		    next;
+		}
+		my $pname = "repo$repo";
+		my $rname = $pname;
+		$rname =~ s:/:_:g;
+		my $cname = "$httpdir/$rname.conf";
+		if (-f $cname) {
+		    print "Config file $cname already existing. Skipping.\n";
+		    next;
+		}
+		print "Exporting $repo through httpd, http://$hostname/$pname\n";
+		open COUT, ">$cname" or die "Could not open $cname : $!";
+		print COUT "Alias /$pname $repo\n";
+		print COUT "<Directory $repo/>\n";
+		print COUT "  Options Indexes\n";
+		print COUT "  order allow,deny\n";
+		print COUT "  allow from all\n";
+		print COUT "</Directory>\n";
+		close COUT;
+		++$changed;
+	    } else {
+		print "Repository URL is not a local absolute path!\n";
+		print "Skipping $repo\n";
+		$err++;
+		next;
+	    }
+	}
+    } else {
+	print "Could not find directory $httpdir!\n";
+	print "Cannot setup httpd configuration for repositories.\n";
+	$err++;
+    }
+    restart_httpd() if ($changed);
+    return $err;
+}
+
+sub del_httpd_conf {
+    my (@repos) = @_;
+    my $httpdir = find_httpdir();
+    my $changed = 0;
+    my $err = 0;
+    if ($httpdir) {
+	for my $repo (@repos) {
+	    if ($repo =~ /^(file:\/|\/)/) {
+		$repo =~ s|^file:||;
+		my $pname = "repo$repo";
+		my $rname = $pname;
+		$rname =~ s:/:_:g;
+		my $cname = "$httpdir/$rname.conf";
+		if (-f $cname) {
+		    print "Deleting config file $cname\n";
+		    if (unlink($cname)) {
+			print "WARNING: Could not delete $cname : $!\n";
+			$err++;
+		    } else {
+			++$changed;
+		    }
+		}
+	    } else {
+		print "Repository URL is not a local absolute path!\n";
+		print "Skipping $repo\n";
+		$err++;
+		next;
+	    }
+	}
+    } else {
+	print "Could not find directory $httpdir!\n";
+	print "Cannot delete httpd configuration for repositories.\n";
+	$err++;
+    }
+    restart_httpd() if ($changed);
+    return $err;
+}
+
+sub list_exported {
+    my $httpdir = find_httpdir();
+    if ($httpdir) {
+	for my $repoconf (glob("$httpdir/repo_*.conf")) {
+	    my $rname = basename($repoconf,".conf");
+	    my ($dummy, $alias,$rdir) = split(" ",`grep "^Alias" $repoconf`);
+	    chomp $rdir;
+	    print "URL $alias : Repository --repo $rdir\n";
+	}
+    }
+    exit;
+}
+
+sub restart_httpd {
+    for my $httpd ("httpd", "httpd2", "apache", "apache2") {
+	if (-x "/etc/init.d/$httpd") {
+	    print "Restarting $httpd\n";
+	    system("/etc/init.d/$httpd restart");
+	    last;
+	}
+    }
+}
+
 
 1;
 __END__
