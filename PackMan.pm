@@ -606,6 +606,7 @@ sub add_httpd_conf {
     my $httpdir = find_httpdir();
     my $changed = 0;
     my $err = 0;
+    chomp(my $hostname = `hostname`);
     if ($httpdir) {
 	for my $repo (@repos) {
 	    if ($repo =~ /^(file:\/|\/)/) {
