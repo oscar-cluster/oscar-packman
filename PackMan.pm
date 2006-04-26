@@ -698,7 +698,6 @@ sub list_exported {
 	    print "URL $alias : Repository --repo $rdir\n";
 	}
     }
-    exit;
 }
 
 sub restart_httpd {
@@ -763,6 +762,12 @@ PackMan - Perl extension for Package Manager abstraction
   ($err,$outref) = $pm->smart_update("pkg1",...);
 
   $pm->output_callback(\&function,\$arg1,...);
+
+  $err = $pm->repo_export;
+
+  $err = $pm->repo_unexport;
+
+  $pm->list_exported;
 
   Following methods will probably become obsolete:
 
@@ -865,10 +870,13 @@ PackMan - Perl extension for Package Manager abstraction
 
   Jeff Squyres, E<lt>jsquyres@lam-mpi.orgE<gt>
   Matt Garrett, E<lt>magarret@OSL.IU.eduE<gt>
+  Erich Focht,  E<lt>efocht@hpce.nec.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
   Copyright (c) 2003-2004 The Trustees of Indiana University.
+                          All rights reserved.
+  Copyright (c) 2005-2006 Erich Focht
                           All rights reserved.
 
 =cut
