@@ -1,0 +1,8 @@
+All the files in the deb directory allows users to create a Debian packages.
+
+To create the package, you just need to call the script "./make-deb.sh <version>", version has to be the same than the version in the deb/debian/control file.
+Before to call the script, be sure the file "deb/debian/control" is up-to-date in order to specify the correct version number. Remember also to update the changelog file in deb/debian (using the command "dch").
+
+The script copy all the files related to Packman/Depman into /tmp/deb-packman.
+The script then call dh_make to create the directory tree needed for the package creation.
+When this tree is created, files for the package description are copied and then the package itself is created.
