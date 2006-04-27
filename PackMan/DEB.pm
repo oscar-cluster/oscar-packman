@@ -23,6 +23,7 @@ package PackMan::DEB;
 use 5.008;
 use strict;
 use warnings;
+use File::Basename;
 
 use Carp;
 
@@ -114,6 +115,24 @@ sub query_version_command_line {
 # How rpm(8) changes root
 sub chroot_arg_command_line {
   '--root=#chroot'
+}
+
+# generate metadata cache for repositories
+sub gencache {
+    ref (my $self = shift) or croak "gencache is an instance method";
+    for my $repo (@{$self->{Repos}}) {
+	next if ($repo =~ /^(http|ftp):/);
+	$repo =~ s/^file://;
+	$repo =~ s/\/$//;
+	next if (($repo !~ m:^/:) || (! -d $repo));
+	my $dir = dirname($repo);
+	my $base = basename($repo);
+	# now generate the Package.gz file
+	my $cmd = "cd $dir; dpkg-scanpackages $base /dev/null";
+	$cmd .= "| tee $base/Packages | gzip -c9 >$base/Packages.gz";
+	print "Executing command: $cmd\n";
+	return !system($cmd);
+    }
 }
 
 1;
