@@ -120,6 +120,7 @@ sub chroot_arg_command_line {
 # generate metadata cache for repositories
 sub gencache {
     ref (my $self = shift) or croak "gencache is an instance method";
+    my $err;
     for my $repo (@{$self->{Repos}}) {
 	next if ($repo =~ /^(http|ftp):/);
 	$repo =~ s/^file://;
@@ -131,8 +132,9 @@ sub gencache {
 	my $cmd = "cd $dir; dpkg-scanpackages $base /dev/null";
 	$cmd .= "| tee $base/Packages | gzip -c9 >$base/Packages.gz";
 	print "Executing command: $cmd\n";
-	return !system($cmd);
+	$err += abs(system($cmd));
     }
+    return ($err?0:1);
 }
 
 1;
