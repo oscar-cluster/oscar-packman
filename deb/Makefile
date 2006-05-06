@@ -1,6 +1,18 @@
+BINDIR=usr/lib/perl5/site_perl/OSCAR/
+
+all:
+	
+
 install:
-	install -d $(DESTDIR)/usr/lib/perl5/site_perl/OSCAR/
-	install -d $(DESTDIR)/usr/lib/perl5/site_perl/OSCAR/PackMan/
-	install -m 644 PackMan.pm $(DESTDIR)/usr/lib/perl5/site_perl/OSCAR/
-	install -m 644 PackMan/DEB.pm $(DESTDIR)/usr/lib/perl5/site_perl/OSCAR/PackMan/
-	install -m 644 PackMan/RPM.pm $(DESTDIR)/usr/lib/perl5/site_perl/OSCAR/PackMan/
+	install -d -m 0755 $(DESTDIR)/$(BINDIR)
+	install -d -m 0755 ${DESTDIR}/$(BINDIR)/DepMan/
+	install -d -m 0755 $(DESTDIR)/$(BINDIR)/PackMan/
+	install    -m 0755 DepMan.pm ${DESTDIR}/$(BINDIR)
+	install    -m 0755 PackMan.pm $(DESTDIR)/$(BINDIR)
+	install    -m 0755 DepMan/UpdateDEBs.pm $(DESTDIR)/$(BINDIR)/DepMan/
+	install    -m 0755 DepMan/UpdateRPMs.pm $(DESTDIR)/$(BINDIR)/DepMan/
+	install    -m 0755 PackMan/DEB.pm $(DESTDIR)/$(BINDIR)/PackMan/
+	install    -m 0755 PackMan/RPM.pm $(DESTDIR)/$(BINDIR)/PackMan/
+
+clean:
+	

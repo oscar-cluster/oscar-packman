@@ -1,12 +1,12 @@
-Source: packman-depman
+Source: packman
 Section: misc
 Priority: optional
 Maintainer: Geoffroy Vallee <valleegr@ornl.gov>
 Build-Depends: debhelper (>= 4.0.0)
 Standards-Version: 1.0 
 
-Package: packman-depman
-Architecture: any
+Package: packman
+Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Package manager abstraction for OSCAR.
  A collection of Perl object modules for use in the OSCAR framework (among
