@@ -28,16 +28,7 @@ use File::Basename;
 use Carp;
 
 our $VERSION;
-$VERSION = '0.01';
-# initial release
-$VERSION = '1.1';
-# copyright and license cleanup
-$VERSION = '1.2';
-# removed dependance on Distro.pm for packaging
-$VERSION = '1.3';
-# bug fixes
-
-$VERSION = sprintf("%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/);
+$VERSION = "r" . q$Rev$ =~ /(\d+)/;
 
 # Must use this form due to compile-time checks by PackMan.
 use base qw(PackMan);
@@ -61,81 +52,177 @@ sub DEB {
 # root directory being passed to the PackMan constructor.
 sub usable {
 
-  my @DISTROFILES = ( 'debian-release' );
+    ref (shift) and croak ("usable is a class method");
+    my $chroot = shift;
+    my $rc;
 
-  ref (shift) and croak ("usable is a class method");
-  my $chroot = shift;
-  my $rc;
-
-  if (defined $chroot) {
-    if (! ($chroot =~ '^/')) {
-      croak ("chroot argument must be an absolute path.");
-    }
-  }
-
-  foreach my $distro (@DISTROFILES) {
+    my $chrootcmd = "";
     if (defined $chroot) {
-      $rc = system ("dpkg --version --root=${chroot} ${distro} > /dev/null 2>&1");
-    } else {
-      $rc = system ("dpkg --version ${distro} > /dev/null 2>&1");
+	if (! ($chroot =~ '^/')) {
+	    croak("chroot argument must be an absolute path.");
+	}
+	$chrootcmd = "chroot $chroot";
     }
-    if (($rc / 256) == 0) {
-      return (1);
-    }
-  }
 
-  return (0);
+    # is dpkg installed an in the path?
+    my $dpkg = system("$chrootcmd dpkg --help >/dev/null 2>&1");
+
+    # is apt-get installed an in the path?
+    my $aget = system("$chrootcmd apt-get --help >/dev/null 2>&1");
+
+    # is rapt installed an in the path?
+    my $rapt = system("$chrootcmd rapt --help >/dev/null 2>&1");
+
+    if (!$dpkg && !$aget && !$rapt) {
+	return 1;
+    }
+    return 0;
 }
 
-# How rpm(8) installs packages (aggregatable)
+# has smart package manager
+sub is_smart {
+    return 1;
+}
+
+# default handler for progress-meter
+sub progress_handler {
+    my $self = shift;
+    my ($line) = @_;
+    if ($line =~ /^Error:/ || $line =~ /^ERROR:/ || $line =~ /^failure:/) {
+	return 1;
+    }
+    return 0 if (!exists($self->{Progress}));
+    my $value = $self->{progress_value};
+    # check out the corresponding fuction for RPM when implementing this
+}
+
+
+
+# How to install .deb packages (aggregatable)
 sub install_command_line {
   1, 'apt-get -y install #args'
 }
 
-# How rpm(8) upgrades installed packages (aggregatable)
+# How to upgrade installed packages (aggregatable)
 sub update_command_line {
   1, 'dpkg -i #args'
 }
 
-# How rpm(8) removes installed packages (aggregatable)
+# How to remove installed packages (aggregatable)
 sub remove_command_line {
   1, 'dpkg -r --purge #args'
 }
 
-# How rpm(8) queries installed packages (not aggregatable)
+# How to query installed packages (not aggregatable)
 sub query_installed_command_line {
   0, 'dpkg-query -p #args'
 }
 
-# How rpm(8) queries installed package versions (not aggregatable)
+# How to query installed package versions (not aggregatable)
 sub query_version_command_line {
   0, 'dpkg-query --queryformat %{VERSION}\n #args'
 }
 
-# How rpm(8) changes root
+# How dpkg changes root
 sub chroot_arg_command_line {
   '--root=#chroot'
 }
+
+# How rapt changes root
+sub smart_chroot_arg_command_line {
+    '--installroot #chroot'
+}
+
+# How rapt handles one repository
+sub repo_arg_command_line {
+    '--repo #repo'
+}
+
+# How rapt installs packages
+sub smart_install_command_line {
+    1,'rapt #repos -y #chroot install #args'
+}
+
+# How rapt removes packages
+sub smart_remove_command_line {
+    1,'rapt #repos -y #chroot remove #args'
+}
+
 
 # generate metadata cache for repositories
 sub gencache {
     ref (my $self = shift) or croak "gencache is an instance method";
     my $err;
+
+    if (system("which dpkg-scanpackages 2>/dev/null")) {
+	print "ERROR: Could not find command dpkg-scanpackages!\n";
+	exit 1;
+    }
+    
+    # detect distribution codename
+    # currently from the master server, should actually come from the pool
+    my $codename = &detect_codename();
+    my $subdir = "dists/$codename/binary-$archstr";
+    my $err = 0;
+
     for my $repo (@{$self->{Repos}}) {
+
 	next if ($repo =~ /^(http|ftp):/);
 	$repo =~ s/^file://;
 	$repo =~ s/\/$//;
 	next if (($repo !~ m:^/:) || (! -d $repo));
-	my $dir = dirname($repo);
-	my $base = basename($repo);
+
+	# create directory for package metadata
+	if (! -d "$repo/subdir") {
+	    !system("mkdir -p $repo/$subdir")
+		or croak "Could not create directory $repo/$subdir";
+	}
 	# now generate the Package.gz file
-	my $cmd = "cd $dir; dpkg-scanpackages $base /dev/null";
-	$cmd .= "| tee $base/Packages | gzip -c9 >$base/Packages.gz";
+	my $cmd = "cd $repo; dpkg-scanpackages ./ /dev/null";
+	$cmd .= "| tee $subdir/Packages | gzip -c9 >$subdir/Packages.gz";
 	print "Executing command: $cmd\n";
 	$err += abs(system($cmd));
     }
     return ($err?0:1);
 }
+
+sub detect_codename {
+    #my ($pool) = @_;
+    my $codename;
+    local *IN;
+
+    if (-f "/etc/debian-release") {
+	# the codename for debian distribution is supposed to be the first
+	# line of the /etc/debian_version file.
+	# Moreover, we just support sarge (aka. Debian 3.1).
+	open (IN, "/etc/debian_version") || die "Can't open file: $!\n";
+	$codename = <IN>;
+	if ($codename =~ /^3\.1/) {
+	    $codename = "sarge";
+	} else {
+	    print "Detected codename \"$codename\" in /etc/debian-release.\n";
+	    die "This distribution is not supported\n";
+	}
+	close IN;
+    } elsif (-f "/etc/lsb-release") {
+	# there is a chance for this being a ubuntu distro
+	# it is not supported, yet, but we'll recognize it
+	# in order to facilitate development for ubuntu
+	open IN, "/etc/lsb-release"
+	    or croak "Cannot open /etc/lsb-release: $!";
+	while (<IN>) {
+	    if (/^DISTRIB_CODENAME=(.*)$/) {
+		$codename = $1;
+	    }
+	}
+	close IN;
+    }
+    if (!$codename) {
+	croak("Could not detect distribution codename!");
+    }
+    return $codename;
+}
+
 
 1;
 __END__
