@@ -5,8 +5,8 @@
 
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman-depman
-Version:   		2.7
-Release:   		2
+Version:   		2.8
+Release:   		1
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:		OSCAR
 Packager:		Erich Focht <efocht@hpce.nec.com>
@@ -48,7 +48,9 @@ interface. RPMs part.
 /usr/bin/pod2man --section=3 PackMan.pm		  | gzip > PackMan.3.gz
 /usr/bin/pod2man --section=3 DepMan.pm 		  | gzip > DepMan.3.gz
 /usr/bin/pod2man --section=3 PackMan/RPM.pm	  | gzip > PackMan-RPM.3.gz
+/usr/bin/pod2man --section=3 PackMan/DEB.pm	  | gzip > PackMan-DEB.3.gz
 /usr/bin/pod2man --section=3 DepMan/UpdateRPMs.pm | gzip > DepMan-UpdateRPMs.3.gz
+/usr/bin/pod2man --section=3 DepMan/UpdateDEBs.pm | gzip > DepMan-UpdateDEBs.3.gz
 
 
 %install
@@ -59,12 +61,16 @@ interface. RPMs part.
 %__install -m 755 PackMan.pm %{bintarget}
 %__install -m 755 DepMan.pm %{bintarget}
 %__install -m 755 PackMan/RPM.pm %{bintarget}/PackMan
+%__install -m 755 PackMan/DEB.pm %{bintarget}/PackMan
 %__install -m 755 DepMan/UpdateRPMs.pm %{bintarget}/DepMan
+%__install -m 755 DepMan/UpdateDEBs.pm %{bintarget}/DepMan
 %__install -m 755 -d		 %{mantarget}
 %__install -m 644 PackMan.3.gz	 %{mantarget}
 %__install -m 644 DepMan.3.gz	 %{mantarget}
 %__install -m 644 PackMan-RPM.3.gz	 %{mantarget}
+%__install -m 644 PackMan-DEB.3.gz	 %{mantarget}
 %__install -m 644 DepMan-UpdateRPMs.3.gz %{mantarget}
+%__install -m 644 DepMan-UpdateDEBs.3.gz %{mantarget}
 
 
 %clean rpms
@@ -80,12 +86,18 @@ interface. RPMs part.
 %files rpms
 %defattr(-,root,root)
 %{binpref}/PackMan/RPM.pm
+%{binpref}/PackMan/DEB.pm
 %{binpref}/DepMan/UpdateRPMs.pm
+%{binpref}/DepMan/UpdateDEBs.pm
 %{manpref}/PackMan-RPM.3.*
+%{manpref}/PackMan-DEB.3.*
 %{manpref}/DepMan-UpdateRPMs.3.*
+%{manpref}/DepMan-UpdateDEBs.3.*
 
 
 %changelog
+* Tue May 08 2006 Erich Focht
+- added DEB.pm
 * Mon Apr 10 2006 Erich Focht
 - added repo_export and repo_unexport methods.
 - repository export/unexport routines come from yume and can now be shared
