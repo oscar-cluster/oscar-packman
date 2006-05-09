@@ -1,6 +1,6 @@
 package DepMan::UpdateRPMs;
 
-#   $Id: UpdateDEBs.pm,v 0.01 2004/12/09 17:31:44 tuelusr Exp $
+#   $Id$
 #   Created by Geoffroy Vallée, INRIA/ORNL, based on updateRPMs.pm
 #
 #   This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,7 @@ our $VERSION;
 $VERSION = '0.01';
 # initial release
 
-$VERSION = sprintf("%d.%02d", q$Revision: 0.01 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/);
 
 # Must use this form due to compile-time checks by DepMan.
 use base qw(DepMan);

@@ -33,15 +33,15 @@ my $installed_dir;
 BEGIN {
     $installed_dir = "OSCAR";	# ugly hack
 
-# change to qw(RPM Deb) when Deb gets written
-# If, by hook or crook, you are on a system where both RPM and Deb (and
+# change to qw(RPM DEB) when Deb gets written
+# If, by hook or crook, you are on a system where both RPM and DEB (and
 # whatever other package managers) will claim usability for a given
 # filesystem, rank them in @preference. Recognition as the default package
 # manager is on a first-come, first-served basis out of @preference. If no
 # default package manager can be determined, all available package managers
 # will be consulted in an indeterminant order in a final attempt to find one
 # that's usable.
-    @preference = qw(RPM Deb);
+    @preference = qw(RPM DEB);
 
     my $packman_dir = File::Spec->catdir ($installed_dir,
 					  split ("::", __PACKAGE__));

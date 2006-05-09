@@ -210,12 +210,12 @@ sub detect_codename {
     }
 
     # what are we targetting?
-    if (!$self->{Chroot}) {
+    if (!$self->{ChRoot}) {
 	# local node
 	$codename = &detect_codename_dir();
     } else {
 	# image
-	$codename = &detect_codename_dir($self->{Chroot});
+	$codename = &detect_codename_dir($self->{ChRoot});
 	if (!$codename) {
 	    $codename = &detect_codename_repo(@{$self->{Repos}});
 	}
@@ -229,14 +229,31 @@ sub detect_codename {
     return $codename;
 }
 
-#
-# This needs improvement. For a local repo it should be able to detect the
-# codename by unpacking the debian-release or lsb-release file.
-# 
 sub detect_codename_repo {
     my (@repos) = @_;
     # the codename of a debian-alike repo is the word after the URL
-    my $codename = (split(/\+/,$repos[0]))[1];
+    my $repo = $repos[0];
+    my ($url,$codename,$dummy) = split(/\+/,$repo);
+
+    # for local repositories try some more tricks
+    if (!$codename && ($url =~ /^file:(\S+)$/)) {
+	my $path = $1;
+	my @cnames = glob("$path/dists/*");
+	if (scalar(@cnames) == 1) {
+	    $codename = basename($cnames[0]);
+	} elsif (scalar(@cnames) > 1) {
+	    print "Pool seems to contain multiple codenames!\n ".
+		join(", ",@cnames)."\n";
+	    print "Cannot identify codename!\n";
+	} else {
+	    # no codename subdirectory or glob expansion failed
+	    #
+	    # ... code missing here ...
+	    # - find .deb packages containing lsb-release and debian-release
+	    # - unpack them and detect the codename
+	    print "... no code for virgin repo codename detection, yet ...\n";
+	}
+    }
     return $codename;
 }
 

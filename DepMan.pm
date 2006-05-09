@@ -11,7 +11,7 @@ use Carp;
 use File::Spec;
 
 our $VERSION;
-$VERSION = "r" . q$Rev: 22 $ =~ /(\d+)/;
+$VERSION = "r" . q$Rev$ =~ /(\d+)/;
 
 # concrete dependency manager order of preference, for breaking ties on
 # systems where multiple dependency manager modules might claim usability.

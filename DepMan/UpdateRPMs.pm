@@ -10,7 +10,7 @@ use warnings;
 use Carp;
 
 our $VERSION;
-$VERSION = "r" . q$Rev: 19 $ =~ /(\d+)/;
+$VERSION = "r" . q$Rev$ =~ /(\d+)/;
 
 # Must use this form due to compile-time checks by DepMan.
 use base qw(DepMan);
