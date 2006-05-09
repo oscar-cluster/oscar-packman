@@ -1,6 +1,6 @@
 package PackMan::DEB;
 
-#   $Id: RPM.pm,v 1.1 2003/12/09 05:39:56 tuelusr Exp $
+#   $Id$
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@ package PackMan::DEB;
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 #   Copyright (c) 2003-2004 The Trustees of Indiana University.
+#                      All rights reserved.
+#   Copyright (c) 2006 Erich Focht <efocht at hpce.nec.com>
 #                      All rights reserved.
 #
 
@@ -161,7 +163,7 @@ sub gencache {
     
     # detect distribution codename
     # currently from the master server, should actually come from the pool
-    my $codename = &detect_codename();
+    my $codename = $self->detect_codename();
     my $subdir = "dists/$codename/binary-$archstr";
     my $err = 0;
 
@@ -186,39 +188,82 @@ sub gencache {
     return ($err?0:1);
 }
 
-sub detect_codename {
-    #my ($pool) = @_;
-    my $codename;
-    local *IN;
 
-    if (-f "/etc/debian-release") {
+#
+# Detect codename of the targetted debian distro (sarge, breezy, ...)
+# Try to do the right thing:
+# - if we're installing into an image and it is already bootstrapped:
+#   read the /etc/debian-release or /etc/lsb-release files in the image
+# - if we're installing into a non-debootstrapped image:
+#   detect codename from the first repository name (first word after the URL)
+# - if we're installing locally, detect codename by reading the local files
+#   /etc/debian-release or /etc/lsb-release
+#
+sub detect_codename {
+    ref (shift) and croak ("codename is a class method");
+    my (%args) =@_;
+    my $codename;
+
+    # the environment variable RAPT_DISTRO_CODENAME overrides detections
+    if ($ENV{RAPT_DISTRO_CODENAME}) {
+	return $ENV{RAPT_DISTRO_CODENAME};
+    }
+
+    # what are we targetting?
+    if (!$self->{Chroot}) {
+	# local node
+	$codename = &detect_codename_dir();
+    } else {
+	# image
+	$codename = &detect_codename_dir($self->{Chroot});
+	if (!$codename) {
+	    $codename = &detect_codename_repo(@{$self->{Repos}});
+	}
+    }
+    if (!$codename) {
+	croak("Could not detect distribution codename!");
+    }
+    if ($codename !~ /^(sarge|breezy)$/) {
+	croak("Unsupported distribution codename: $codename\n");
+    }
+    return $codename;
+}
+
+#
+# This needs improvement. For a local repo it should be able to detect the
+# codename by unpacking the debian-release or lsb-release file.
+# 
+sub detect_codename_repo {
+    my (@repos) = @_;
+    # the codename of a debian-alike repo is the word after the URL
+    my $codename = (split(/\+/,$repos[0]))[1];
+    return $codename;
+}
+
+sub detect_codename_dir {
+    my ($dir) = @_;
+    my $codename;
+
+    if (-f "$dir/etc/debian-release") {
 	# the codename for debian distribution is supposed to be the first
 	# line of the /etc/debian_version file.
 	# Moreover, we just support sarge (aka. Debian 3.1).
-	open (IN, "/etc/debian_version") || die "Can't open file: $!\n";
+	open (IN, "$dir/etc/debian_version")
+	    or die "Can't open file: $!\n";
 	$codename = <IN>;
-	if ($codename =~ /^3\.1/) {
-	    $codename = "sarge";
-	} else {
-	    print "Detected codename \"$codename\" in /etc/debian-release.\n";
-	    die "This distribution is not supported\n";
-	}
 	close IN;
-    } elsif (-f "/etc/lsb-release") {
+    } elsif (-f "$dir/etc/lsb-release") {
 	# there is a chance for this being a ubuntu distro
 	# it is not supported, yet, but we'll recognize it
 	# in order to facilitate development for ubuntu
-	open IN, "/etc/lsb-release"
-	    or croak "Cannot open /etc/lsb-release: $!";
+	open IN, "$dir/etc/lsb-release"
+	    or croak "Cannot open $dir/etc/lsb-release: $!";
 	while (<IN>) {
 	    if (/^DISTRIB_CODENAME=(.*)$/) {
 		$codename = $1;
 	    }
 	}
 	close IN;
-    }
-    if (!$codename) {
-	croak("Could not detect distribution codename!");
     }
     return $codename;
 }
