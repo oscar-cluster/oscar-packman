@@ -1,4 +1,4 @@
-BINDIR=usr/lib/perl5/site_perl/OSCAR/
+BINDIR=usr/lib/perl5/OSCAR/
 
 all:
 	
