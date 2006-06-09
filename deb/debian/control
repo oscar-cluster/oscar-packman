@@ -3,7 +3,7 @@ Section: misc
 Priority: optional
 Maintainer: Geoffroy Vallee <valleegr@ornl.gov>
 Build-Depends: debhelper (>= 4.0.0)
-Standards-Version: 1.0 
+Standards-Version: 2.8.1 
 
 Package: packman
 Architecture: all
