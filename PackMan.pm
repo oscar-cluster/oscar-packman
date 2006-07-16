@@ -41,7 +41,9 @@ BEGIN {
 # default package manager can be determined, all available package managers
 # will be consulted in an indeterminant order in a final attempt to find one
 # that's usable.
-    @preference = qw(RPM DEB);
+# !!GV!! Because Debian supports both rpm and deb and since rpm based distris
+# do not support deb (at least for what i know), i changed the order
+    @preference = qw(DEB RPM);
 
     my $packman_dir = File::Spec->catdir ($installed_dir,
 					  split ("::", __PACKAGE__));
