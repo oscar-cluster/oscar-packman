@@ -6,7 +6,7 @@
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman-depman
 Version:   		2.8
-Release:   		1
+Release:   		2
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:		OSCAR
 Packager:		Erich Focht <efocht@hpce.nec.com>
@@ -96,6 +96,8 @@ interface. RPMs part.
 
 
 %changelog
+* Sun Jul 16 2006 Geoffroy Valleee <valleegr@ornl.gov>
+- change the order of preferences for the backends. It is now (DEB, RPM).
 * Tue May 08 2006 Erich Focht
 - added DEB.pm
 * Mon Apr 10 2006 Erich Focht

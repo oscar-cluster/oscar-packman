@@ -35,7 +35,7 @@ build-stamp: configure-stamp
 
 	# Add here commands to compile the package.
 	$(MAKE)
-	#docbook-to-man debian/hawknl.sgml > hawknl.1
+	#docbook-to-man debian/packman.sgml > packman.1
 
 	touch build-stamp
 
@@ -56,7 +56,7 @@ install: build
 	dh_installdirs
 
 	# Add here commands to install the package into debian/hawknl.
-	$(MAKE) install DESTDIR=$(CURDIR)/debian/hawknl
+	$(MAKE) install DESTDIR=$(CURDIR)/debian/packman
 
 
 # Build architecture-independent files here.

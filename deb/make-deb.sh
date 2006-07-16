@@ -55,6 +55,7 @@ ret=`/usr/bin/dpkg-buildpackage -rfakeroot`
 # then we grab the created files :-)
 cd .. 
 cp -rf *.changes *.deb *.orig.tar.gz $path
+rm -rf /tmp/deb-packman
 
 echo "Package(s) created and available in the deb directory"
 
