@@ -1,3 +1,16 @@
+packman (2.8.1-2) unstable; urgency=low
+
+  * Add dependencies to dpkg, apt, and rapt since they are needed when we
+    create a new packman instantiation.
+
+ -- Geoffroy Vallee <valleegr@ornl.gov>  Sun, 23 Jul 2006 02:55:36 -0400
+
+packman (2.8.1-1) unstable; urgency=low
+
+  * Remove DepMan since it is not any more used.
+
+ -- Geoffroy Vallee <valleegr@ornl.gov>  Sun, 23 Jul 2006 02:20:59 -0400
+
 packman (2.8.1-1) unstable; urgency=low
 
   * Change the order of preference for backends, it is now (DEB, RPM).

@@ -50,7 +50,7 @@ cp -f debian/changelog /tmp/deb-packman/packman-${version_number}/debian
 # we then really create the package
 cd  /tmp/deb-packman/packman-${version_number}
 echo "Executing dpkg-buildpackage -rfakeroot"
-ret=`/usr/bin/dpkg-buildpackage -rfakeroot`
+ret=`/usr/bin/dpkg-buildpackage -rfakeroot -uc -us`
 
 # then we grab the created files :-)
 cd .. 

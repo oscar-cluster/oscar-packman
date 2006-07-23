@@ -7,7 +7,7 @@ Standards-Version: 2.8.1
 
 Package: packman
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: dpkg, apt, rapt 
 Description: Package manager abstraction for OSCAR.
  A collection of Perl object modules for use in the OSCAR framework (among
  other places) to facilitate the transparent utilization of the native
