@@ -75,6 +75,14 @@ sub usable {
     # is rapt installed an in the path?
     my $rapt = system("$chrootcmd rapt --help >/dev/null 2>&1");
 
+    if ($dpkg) {
+        print "Packman: dpkg does not work!\n";
+    } elsif ($aget) {
+        print "Packman: apt-get does not work!\n";
+    } elsif ($rapt) {
+        print "Packman: rapt does not work!\n";
+    }
+
     if (!$dpkg && !$aget && !$rapt) {
 	return 1;
     }
