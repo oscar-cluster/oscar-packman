@@ -1,11 +1,17 @@
-packman (2.8.1-2) unstable; urgency=low
+packman (2.8.1-3gv) UNRELEASED; urgency=low
+
+  * Add debugging information.
+
+ -- Geoffroy Vallee <valleegr@ornl.gov>  Fri, 22 Dec 2006 17:48:41 -0500
+
+packman (2.8.1-2) UNRELEASED; urgency=low
 
   * Add dependencies to dpkg, apt, and rapt since they are needed when we
     create a new packman instantiation.
 
  -- Geoffroy Vallee <valleegr@ornl.gov>  Sun, 23 Jul 2006 02:55:36 -0400
 
-packman (2.8.1-1) unstable; urgency=low
+packman (2.8.1-1) UNRELEASED; urgency=low
 
   * Remove DepMan since it is not any more used.
 
