@@ -1,4 +1,5 @@
 BINDIR=usr/lib/perl5/OSCAR/
+DEBTMP=/tmp/packman
 
 all:
 	
@@ -13,6 +14,12 @@ install:
 #	install    -m 0755 DepMan/UpdateRPMs.pm $(DESTDIR)/$(BINDIR)/DepMan/
 	install    -m 0755 PackMan/DEB.pm $(DESTDIR)/$(BINDIR)/PackMan/
 	install    -m 0755 PackMan/RPM.pm $(DESTDIR)/$(BINDIR)/PackMan/
+
+deb ::
+	rm -rf $(DEBTMP)
+	mkdir -p $(DEBTMP)
+	cp -rf * $(DEBTMP)
+	cd $(DEBTMP); dpkg-buildpackage -b
 
 clean:
 	
