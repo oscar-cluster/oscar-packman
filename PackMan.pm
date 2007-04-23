@@ -526,7 +526,15 @@ sub smart_install {
     if ((scalar @_) == 0) {
 	return (0);
     }
-    return ($self->do_simple_command ('smart_install', @_));
+    my ($err, @out) = $self->do_simple_command('smart_install', @_);
+
+    #my ($inst, $notinst) = $self->query_installed(@_);
+    #if (scalar(@{$notinst})) {
+    #	print "WARNING: Some packages were not installed!\n";
+    #	print "    ".join(" ",@{$notinst})."\n";
+    #	$err = 0;
+    #}
+    return ($err,@out);
 }
 
 # Command the smart package manager to remove each of the package files
