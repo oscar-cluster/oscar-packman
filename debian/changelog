@@ -1,3 +1,9 @@
+packman (2.8.1-3gv2) UNRELEASED; urgency=low
+
+  * Update the package to make it more compliant with the Debian policy.
+
+ -- Geoffroy Vallee <valleegr@ornl.gov>  Fri, 11 May 2007 10:21:00 -0400
+
 packman (2.8.1-3gv1) UNRELEASED; urgency=low
 
   * Add debugging information.

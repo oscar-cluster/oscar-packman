@@ -1,6 +1,13 @@
-hawknl for Debian
+Packman for Debian
 -----------------
 
-<possible notes regarding this package - if none, delete this file>
+TODO list:
+    * Still few warning when checking the package with packman:
+    W: packman: package-installs-nonbinary-perl-in-usr-lib-perl5 
+       usr/lib/perl5/OSCAR/PackMan/DEB.pm
+    W: packman: package-installs-nonbinary-perl-in-usr-lib-perl5 
+       usr/lib/perl5/OSCAR/PackMan/RPM.pm
+    W: packman: package-installs-nonbinary-perl-in-usr-lib-perl5 
+       usr/lib/perl5/OSCAR/PackMan.pm
 
  -- Geoffroy Vallee <geoffroy.vallee@gmail.com>, Thu, 30 Mar 2006 21:34:23 -0500

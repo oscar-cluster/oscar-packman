@@ -3,12 +3,12 @@ Section: misc
 Priority: optional
 Maintainer: Geoffroy Vallee <valleegr@ornl.gov>
 Build-Depends: debhelper (>= 4.0.0)
-Standards-Version: 2.8.1 
+Standards-Version: 3.7.2
 
 Package: packman
 Architecture: all
-Depends: dpkg, apt
-Description: Package manager abstraction for OSCAR.
+Depends: dpkg (>=1.13.25), apt
+Description: Package manager abstraction for OSCAR
  A collection of Perl object modules for use in the OSCAR framework (among
  other places) to facilitate the transparent utilization of the native
  underlying package manager and dependency manager infrastructure across a wide
