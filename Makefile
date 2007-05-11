@@ -19,7 +19,7 @@ deb ::
 	rm -rf $(DEBTMP)
 	mkdir -p $(DEBTMP)
 	cp -rf * $(DEBTMP)
-	cd $(DEBTMP); dpkg-buildpackage -b
+	cd $(DEBTMP); dpkg-buildpackage -rfakeroot -uc -us
 
 clean:
 	
