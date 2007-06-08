@@ -110,7 +110,7 @@ sub progress_handler {
 
 # How to install .deb packages (aggregatable)
 sub install_command_line {
-  1, 'apt-get -y install #args'
+  1, 'apt-get install #args --allow-unauthenticated -y'
 }
 
 # How to upgrade installed packages (aggregatable)
@@ -150,7 +150,7 @@ sub repo_arg_command_line {
 
 # How rapt installs packages
 sub smart_install_command_line {
-    1,'rapt #repos -y #chroot install #args'
+    1,'rapt #repos #chroot install #args --allow-unauthenticated -y'
 }
 
 # How rapt removes packages
