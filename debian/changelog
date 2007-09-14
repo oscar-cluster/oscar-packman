@@ -1,4 +1,4 @@
-packman (2.8.1-3gv3) UNRELEASED; urgency=low
+packman (2.8.1-3gv3) stable; urgency=low
 
   * Add the option "--allow-unauthenticated" when using "apt-get install".
     This is needed because of the switch to Etch.
