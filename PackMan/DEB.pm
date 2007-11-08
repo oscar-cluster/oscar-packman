@@ -167,7 +167,7 @@ sub whatprovides {
     ref (shift) and croak ("whatprovides is a class method");
     my $capability = shift;
 
-    my $p = `dpkg-query -W -f '${Package} ${Provides}\n' | grep $capability`;
+    my $p = `dpkg-query -W -f '\${Package} \${Provides}\\n' | grep $capability`;
     chomp($p);
     my ($pkg, $rest) = split(" ", $p);
     return $pkg;
