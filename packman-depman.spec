@@ -5,8 +5,8 @@
 
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman-depman
-Version:   		2.8.1
-Release:   		3gv
+Version:   		2.9.0
+Release:   		1
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:		OSCAR
 Packager:		Erich Focht <efocht@hpce.nec.com>
@@ -96,6 +96,13 @@ interface. RPMs part.
 
 
 %changelog
+* Thu Nov 08 2007 Erich Focht -> 2.9.0-1
+- fixed query_installed bugs
+- added whatprovides method to RPM module, this is missing in Debian
+- added check_installed method for checking if a list of packages is installed
+- added search_repo method for searching a repository for packages matching a pattern
+- added clean method implementation for apt caches
+- limited clean method scope to the configured repositories
 * Fri Dec 22 2006 Geoffroy Vallee <valleegr@ornl.gov>
 - add debugging information for the Debian part of packman.
 * Sun Jul 16 2006 Geoffroy Vallee <valleegr@ornl.gov>

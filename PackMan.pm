@@ -10,7 +10,6 @@ use warnings;
 
 use Carp;
 use File::Spec;
-
 use Data::Dumper;
 
 our $VERSION;
@@ -41,9 +40,7 @@ BEGIN {
 # default package manager can be determined, all available package managers
 # will be consulted in an indeterminant order in a final attempt to find one
 # that's usable.
-# !!GV!! Because Debian supports both rpm and deb and since rpm based distris
-# do not support deb (at least for what i know), i changed the order
-    @preference = qw(DEB RPM);
+    @preference = qw(RPM DEB);
 
     my $packman_dir = File::Spec->catdir ($installed_dir,
 					  split ("::", __PACKAGE__));
@@ -289,7 +286,9 @@ sub command_helper {
     return ($aggregatable, $command, $cl, $success);
 }
 
-# template for install, upgrade, and remove command operations
+#
+# template for command operations
+#
 sub do_simple_command {
     my $self = shift;
     my $command_name = shift;
@@ -376,7 +375,7 @@ sub do_simple_command {
 	    } else {
 		my $line = $cl;
 		$line =~ s/#args/$package/g;
-		exec ($command, split /\s+/, $line) or die "can't exec program: $!";
+		exec ("$command $line") or die "can't exec program: $!";
 	    }
 	}
     }
@@ -426,94 +425,6 @@ sub remove {
     return ($self->do_simple_command ('remove', @_));
 }
 
-# Query the underlying package manager to report the list of which of the
-# packages in the argument list are presently installed and which are
-# uninstalled.
-#
-# [Erich Focht]: this command will probably become obsolete
-sub query_installed {
-    my @installed;
-    my @not_installed;
-    ref (my $self = shift) or croak "query_installed is an instance method";
-
-    # save existing callback
-    my ($save_cb, $save_cba);
-    if ($self->{Callback}) {
-	$save_cb = $self->{Callback};
-	$save_cba = $self->{Callback_Args};
-    }
-
-    # filter routine to be used as temporary callback
-    sub filter_installed {
-	my ($line, $installed, $not_installed) = @_;
-	if ($line =~ m/^\w+\s+(\S+)\s/) {
-	    # horrible kludge alert!
-	    # assumes second whitespace delimited field is our argument name
-	    push @{$not_installed}, $1;
-	} else {
-	    push @{$installed}, $line;
-	}
-    }
-
-    # register temporary callback
-    $self->output_callback(\&filter_installed,\@installed,\@not_installed);
-
-    # execute command and temporary callback for each output line
-    $self->do_simple_command ('query_installed', @_);
-    if ($save_cb) {
-	$self->output_callback($save_cb, @{$save_cba});
-    } else {
-	delete $self->{Callback};
-	delete $self->{Callback_Args};
-    }
-    return (\@installed, \@not_installed);
-}
-
-
-# Query the underlying package manager to report the versions of each of the
-# packages listed in the arguments. Order of report/return value corresponds
-# to the order of the argument list. undef value means corresponding package
-# was not installed.
-#
-# [Erich Focht]: this command will probably become obsolete
-sub query_version {
-    my @versions;
-    ref (my $self = shift) or croak "query_version is an instance method";
-
-    # save existing callback
-    my ($save_cb, $save_cba);
-    if ($self->{Callback}) {
-	$save_cb = $self->{Callback};
-	$save_cba = $self->{Callback_Args};
-    }
-
-    # filter routine to be used as temporary callback
-    sub filter_version {
-	my ($line, $versions) = @_;
-	if ($line =~ m/[ \t]+/) {
-	    # horrible kludge alert!
-	    # assumes any whitespace is an indication of failure
-	    push @{$versions}, undef;
-	} else {
-	    push @{$versions}, $line;
-	}
-    }
-
-    # register temporary callback
-    $self->output_callback(\&filter_version,\@versions);
-
-    # execute command and temporary callback for each output line
-    $self->do_simple_command ('query_version', @_);
-
-    # restore old callback
-    if ($save_cb) {
-	$self->output_callback($save_cb, @{$save_cba});
-    } else {
-	delete $self->{Callback};
-	delete $self->{Callback_Args};
-    }
-    return (@versions);
-}
 
 # Command the smart package manager to install each of the package files
 # in the argument list and resolve dependencies automatically.
@@ -526,15 +437,7 @@ sub smart_install {
     if ((scalar @_) == 0) {
 	return (0);
     }
-    my ($err, @out) = $self->do_simple_command('smart_install', @_);
-
-    #my ($inst, $notinst) = $self->query_installed(@_);
-    #if (scalar(@{$notinst})) {
-    #	print "WARNING: Some packages were not installed!\n";
-    #	print "    ".join(" ",@{$notinst})."\n";
-    #	$err = 0;
-    #}
-    return ($err,@out);
+    return ($self->do_simple_command ('smart_install', @_));
 }
 
 # Command the smart package manager to remove each of the package files
@@ -573,8 +476,113 @@ sub gencache {
     return ($self->do_simple_command ('gencache', @_));
 }
 
+# Query the underlying package manager to report the list of which of the
+# packages in the argument list are presently installed and which are
+# uninstalled.
+#
+# Argument: list of packages to be queried
+#
+# Returns: reference to a hash containing as primary keys the really installed
+#          package names. Each hash entry is a reference to an array of hash
+#          references of the form:
+#          {
+#            version => "1.2.3-1",
+#            arch => "i386"
+#          }
+#
+sub query_installed {
+    ref (my $self = shift) or croak "query_installed is an instance method";
+    my %installed;
+
+    # save existing callback
+    my ($save_cb, $save_cba);
+    if ($self->{Callback}) {
+	$save_cb = $self->{Callback};
+	$save_cba = $self->{Callback_Args};
+    }
+
+    # filter routine to be used as temporary callback
+    sub filter_installed {
+	my ($line, $installed) = @_;
+	if ($line =~ m/^found: (\S+) (\S+) (\S+)$/) {
+	    my $name = $1;
+	    my $version = $2;
+	    my $arch = $3;
+	    if (exists($installed->{$name})) {
+		push @{$installed->{$name}}, { version => $version, arch => $arch };
+	    } else {
+		$installed->{$name} = [ { version => $version, arch => $arch } ];
+	    }
+	    vprint("PM:filter_installed: $line\n");
+	}
+    }
+
+    # register temporary callback
+    $self->output_callback(\&filter_installed, \%installed);
+
+    # execute command and temporary callback for each output line
+    $self->do_simple_command('query_installed', @_);
+    if ($save_cb) {
+	$self->output_callback($save_cb, @{$save_cba});
+    } else {
+	delete $self->{Callback};
+	delete $self->{Callback_Args};
+    }
+    vprint("PM:query_installed: returns:\n".Dumper(\%installed)."\n");
+    return \%installed;
+}
+
+#
+# Check whether a list of packages was installed or not.
+# Usage:
+#    @list = $pm->check_installed(@pkgs);
+#
+# @list is the list of packages which are not installed
+#
+sub check_installed {
+    ref (my $self = shift) or croak "check_installed is an instance method";
+    my (@pkgs) = @_;
+
+    my $installed = $self->query_installed(@pkgs);
+    my $match = join("|", keys(%{$installed}));
+    my @failed;
+    # match targetted packages with installed package names
+    for my $p (@pkgs) {
+	if ($p !~ m/^($match)$/) {
+	    push @failed, $p;
+	}
+    }
+    my @really_failed;
+    # check if failed packages are capabilities
+    if (exists($self->whatprovides)) {
+	for (@failed) {
+	    if ($self->whatprovides($_) eq "") {
+		push @really_failed, $_;
+	    }
+	}
+    } else {
+	print STDERR "WARNING: whatprovides method not available!\n".
+	    "check_installed fail if using with capabilities.\n";
+	@really_failed = @failed;
+    }
+    return @really_failed;
+}
+
+#
+# Search repository for packages matching the passed pattern
+#
+# Usage:
+#    ($err, @list) = $pm->search_repo("pattern");
+sub search_repo {
+    ref (my $self = shift) or croak "search_repo is an instance method";
+    if (scalar(@_) == 1) {
+	croak "ERROR: Need exactly one argument for search_repo!\n";
+    }
+    return ($self->do_simple_command ('search_repo', @_));
+}
+
 # ###
-# Functiones for exporting repositories via HTTPD
+# Functions for exporting repositories via HTTPD
 # These were taken from "yume" such that other package managers
 # can also make use of them. [Erich Focht, 2006]
 # Most of these are not "methods" but "functions", because yume uses
@@ -605,9 +613,7 @@ sub find_httpdir {
 	    last;
 	}
     }
-    if ($verbose) {
-	print "Found httpdir = $httpdir\n";
-    }
+    vprint("Found httpdir = $httpdir\n");
     return $httpdir;
 }
 
@@ -720,6 +726,9 @@ sub restart_httpd {
     }
 }
 
+sub vprint {
+    print STDERR "@_\n" if ($verbose);
+}
 
 1;
 __END__

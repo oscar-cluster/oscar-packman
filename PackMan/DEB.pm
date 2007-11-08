@@ -75,14 +75,6 @@ sub usable {
     # is rapt installed an in the path?
     my $rapt = system("$chrootcmd rapt --help >/dev/null 2>&1");
 
-    if ($dpkg) {
-        print "Packman: dpkg does not work!\n";
-    } elsif ($aget) {
-        print "Packman: apt-get does not work!\n";
-    } elsif ($rapt) {
-        print "Packman: rapt does not work!\n";
-    }
-
     if (!$dpkg && !$aget && !$rapt) {
 	return 1;
     }
@@ -110,7 +102,7 @@ sub progress_handler {
 
 # How to install .deb packages (aggregatable)
 sub install_command_line {
-  1, 'apt-get install #args --allow-unauthenticated -y'
+  1, 'apt-get -y install #args'
 }
 
 # How to upgrade installed packages (aggregatable)
@@ -125,12 +117,7 @@ sub remove_command_line {
 
 # How to query installed packages (not aggregatable)
 sub query_installed_command_line {
-  0, 'dpkg-query -p #args'
-}
-
-# How to query installed package versions (not aggregatable)
-sub query_version_command_line {
-  0, 'dpkg-query --queryformat %{VERSION}\n #args'
+  1, 'dpkg-query -W --showformat \'found: ${Package} ${Version} ${Architecture}\\n\' #args'
 }
 
 # How dpkg changes root
@@ -150,7 +137,7 @@ sub repo_arg_command_line {
 
 # How rapt installs packages
 sub smart_install_command_line {
-    1,'rapt #repos #chroot install #args --allow-unauthenticated -y'
+    1,'rapt #repos -y #chroot install #args'
 }
 
 # How rapt removes packages
@@ -161,6 +148,16 @@ sub smart_remove_command_line {
 # Generate repository caches
 sub gencache_command_line {
     1,'rapt #repos --prepare'
+}
+
+# How to search packages in a repository
+sub search_repo_update_command_line {
+    1,'rapt #repos #chroot --names-only search \'#args\''
+}
+
+# Clear apt caches
+sub do_clean {
+    return system("rapt #repos #chroot clean");
 }
 
 

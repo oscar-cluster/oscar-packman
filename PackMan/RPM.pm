@@ -106,6 +106,20 @@ sub progress_handler {
     return 0;
 }
 
+#
+# Return package which provides a certain feature.
+#
+sub whatprovides {
+    ref (shift) and croak ("whatprovides is a class method");
+    my $capability = shift;
+
+    my $p = `rpm -q --whatprovides "$capability"`;
+    if ($?) {
+	return "";
+    }
+    return chomp($p);
+}
+
 # How rpm(8) installs packages (aggregatable)
 sub install_command_line {
   1, 'rpm --install -vh #args'
@@ -123,12 +137,7 @@ sub remove_command_line {
 
 # How rpm(8) queries installed packages (not aggregatable)
 sub query_installed_command_line {
-  0, 'rpm --query #args'
-}
-
-# How rpm(8) queries installed package versions (not aggregatable)
-sub query_version_command_line {
-  0, 'rpm --query --queryformat %{VERSION}\n #args'
+  1, 'rpm --query --qf \'found: %{NAME} %{VERSION}-%{RELEASE} %{ARCH}\\n\' #args'
 }
 
 # How rpm(8) changes root
@@ -161,9 +170,14 @@ sub smart_update_command_line {
     1,'yume #repos -y #chroot update #args'
 }
 
+# How to search packages in a repository
+sub search_repo_update_command_line {
+    1,'yume #repos #chroot --repoquery --nevra #args'
+}
+
 # Clear yum caches
 sub do_clean {
-    return system("yum clean all");
+    return system("yume #repos #chroot clean all");
 }
 
 # Generate repository caches

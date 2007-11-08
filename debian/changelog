@@ -1,3 +1,19 @@
+packman (2.9.0-1) stable; urgency=low
+
+  * fixed query_installed bugs
+
+  * added whatprovides method to RPM module, this is missing in Debian
+
+  * added check_installed method for checking if a list of packages is installed
+
+  * added search_repo method for searching a repository for packages matching a pattern
+
+  * added clean method implementation for apt caches
+
+  * limited clean method scope to the configured repositories
+
+ -- Erich Focht <efocht@hpce.nec.com>  Thu,  8 Nov 2007 14:24:29 +0100
+
 packman (2.8.1-3gv3) stable; urgency=low
 
   * Add the option "--allow-unauthenticated" when using "apt-get install".
