@@ -554,16 +554,10 @@ sub check_installed {
     }
     my @really_failed;
     # check if failed packages are capabilities
-    if (exists($self->whatprovides)) {
-	for (@failed) {
-	    if ($self->whatprovides($_) eq "") {
-		push @really_failed, $_;
-	    }
+    for (@failed) {
+	if ($self->whatprovides($_) eq "") {
+	    push @really_failed, $_;
 	}
-    } else {
-	print STDERR "WARNING: whatprovides method not available!\n".
-	    "check_installed fail if using with capabilities.\n";
-	@really_failed = @failed;
     }
     return @really_failed;
 }

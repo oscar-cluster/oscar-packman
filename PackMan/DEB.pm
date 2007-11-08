@@ -160,6 +160,18 @@ sub do_clean {
     return system("rapt #repos #chroot clean");
 }
 
+#
+# Return package which provides a certain feature.
+#
+sub whatprovides {
+    ref (shift) and croak ("whatprovides is a class method");
+    my $capability = shift;
+
+    my $p = `dpkg-query -W -f '${Package} ${Provides}\n' | grep $capability`;
+    chomp($p);
+    my ($pkg, $rest) = split(" ", $p);
+    return $pkg;
+}
 
 1;
 __END__
