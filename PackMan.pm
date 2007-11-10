@@ -544,7 +544,14 @@ sub check_installed {
     my (@pkgs) = @_;
 
     my $installed = $self->query_installed(@pkgs);
-    my $match = join("|", keys(%{$installed}));
+    my @match;
+    for (keys(%{$installed})) {
+	push @match, "\Q$_";
+	for my $p (@{$installed->{$_}}) {
+	    push @match, "\Q$_".".".$p->{arch};
+	}
+    }
+    my $match = join("|", @match);
     my @failed;
     # match targetted packages with installed package names
     for my $p (@pkgs) {

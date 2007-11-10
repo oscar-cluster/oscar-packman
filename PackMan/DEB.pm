@@ -164,7 +164,7 @@ sub do_clean {
 # Return package which provides a certain feature.
 #
 sub whatprovides {
-    ref (shift) and croak ("whatprovides is a class method");
+    my $self = shift;
     my $capability = shift;
 
     my $p = `dpkg-query -W -f '\${Package} \${Provides}\\n' | grep $capability`;
