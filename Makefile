@@ -15,7 +15,7 @@ install:
 	install    -m 0755 PackMan/RPM.pm $(DESTDIR)/$(BINDIR)/PackMan/
 
 deb ::
-	dpkg-buildpackage -rfakeroot -uc -us
+	dpkg-buildpackage -rfakeroot 
 
 clean:
 	
