@@ -1,0 +1,19 @@
+packman-2.9.1:
+* For Debian, switch back to apt-get instead of aptitude; problems with
+untrusted packages.
+
+packman-2.9.0:
+* Fixed query_installed bugs
+* Added whatprovides method to RPM module, this is missing in Debian
+* Added check_installed method for checking if a list of packages is installed
+* Added search_repo method for searching a repository for packages matching a 
+pattern
+* Added clean method implementation for apt caches
+* Limited clean method scope to the configured repositories
+
+packman-2.8.1:
+* Add the option "--allow-unauthenticated" when using "apt-get install". This
+is needed because of the switch to Etch.
+* Update the package to make it more compliant with the Debian policy.
+* Add debugging information.
+* Change the order of preference for backends, it is now (DEB, RPM).
