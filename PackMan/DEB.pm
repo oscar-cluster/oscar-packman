@@ -86,16 +86,43 @@ sub is_smart {
     return 1;
 }
 
-# default handler for progress-meter
+# Default handler for progress-meter.
+#
+# Return: 0 if success, 1 else.
 sub progress_handler {
     my $self = shift;
     my ($line) = @_;
     if ($line =~ /^Error:/ || $line =~ /^ERROR:/ || $line =~ /^failure:/) {
-	return 1;
+        return 1;
     }
     return 0 if (!exists($self->{Progress}));
     my $value = $self->{progress_value};
-    # check out the corresponding fuction for RPM when implementing this
+
+    my ($lines_so_far, $totallines);
+
+    if ($line =~ /I: Retrieving Release/) {
+        $value = 2;
+    }
+
+    if ($line =~ /I: Validating Packages/) {
+        $value = 4;
+    }
+
+    if ($line =~ /I: Resolving dependencies of base packages/) {
+        $value = 6;
+    }
+
+    if ($line =~ /I: Base system installed successfully/) {
+        $value = 50;
+    }
+    if ($value) {
+        my $ovalue = $self->{progress_value};
+        if ($ovalue != $value) {
+            $self->{progress_value} = $value;
+            printf "[progress: %d]\n", $value;
+        }
+    }
+    return 0;
 }
 
 
