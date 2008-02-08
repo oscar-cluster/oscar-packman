@@ -67,7 +67,8 @@ sub is_smart {
 }
 
 # default handler for progress-meter
-# - prints 
+# - prints
+# Return: 0 if success, 1 else.
 sub progress_handler {
     my $self = shift;
     my ($line) = @_;
