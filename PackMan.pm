@@ -3,14 +3,19 @@ package PackMan;
 # Copyright (c) 2003-2004 The Trustees of Indiana University.
 # Copyright (c) 2006      Erich Focht <efocht@hpce.nec.com>
 #                         All rights reserved.
+# Copyright (C) 2008      Oak Ridge National Laboratory
+#                         Geoffroy Vallee <valleegr@ornl.gov>
+#                         All rights reserved.
 # $Id$
 
 use strict;
-use warnings;
+use warnings "all";
 
 use Carp;
 use File::Spec;
 use Data::Dumper;
+
+use OSCAR::PackManDefs;
 
 our $VERSION;
 $VERSION = "r" . q$Rev$ =~ /(\d+)/;
@@ -30,7 +35,7 @@ my $installed_dir;
 
 # Preloaded methods go here.
 BEGIN {
-    $installed_dir = "OSCAR";	# ugly hack
+    $installed_dir = "OSCAR";    # ugly hack
 
 # change to qw(RPM DEB) when Deb gets written
 # If, by hook or crook, you are on a system where both RPM and DEB (and
@@ -40,47 +45,49 @@ BEGIN {
 # default package manager can be determined, all available package managers
 # will be consulted in an indeterminant order in a final attempt to find one
 # that's usable.
-    @preference = qw(RPM DEB);
+    @preference = qw(DEB RPM);
 
     my $packman_dir = File::Spec->catdir ($installed_dir,
-					  split ("::", __PACKAGE__));
+                      split ("::", __PACKAGE__));
     my $full_dir;
 
     foreach my $inc (@INC) {
-	$full_dir = File::Spec->catdir ($inc, $packman_dir);
-	if (-d $full_dir) {
-	    last;
-	} else {
-	    undef ($full_dir);
-	}
+    $full_dir = File::Spec->catdir ($inc, $packman_dir);
+    if (-d $full_dir) {
+        last;
+    } else {
+        undef ($full_dir);
+    }
     }
 
     defined ($full_dir) or
-	croak "No directory of concrete " . __PACKAGE__ .
-	" implementations could be found!";
+        croak "No directory of concrete " . __PACKAGE__ .
+              " implementations could be found!";
 
     opendir (PACKMANDIR, $full_dir) or
-	croak "Couldn't access concrete " . __PACKAGE__ . " implementations: $!";
+        croak "Couldn't access concrete " . __PACKAGE__ . 
+              " implementations: $!";
 
     foreach my $pm (readdir (PACKMANDIR)) {
-	# only process .pm files
-	if ($pm =~ m/\.pm$/) {
-	    require File::Spec->catfile ($packman_dir, $pm);
-	    $pm =~ s/\.pm$//;
-	    my $module = $packman_dir;
-	    # Calling isa requires that the installed directory be stripped.
-	    $module =~ s:^$installed_dir/::;
-	    $module = join ("::", File::Spec->splitdir ($module)) . "::" . $pm;
-	    # if it's actually a PackMan module, remember it
-	    if ("$module"->isa (__PACKAGE__)) {
-		$concrete{$pm} = $module;
-	    }
-	}
+        # only process .pm files
+        if ($pm =~ m/\.pm$/) {
+            require File::Spec->catfile ($packman_dir, $pm);
+            $pm =~ s/\.pm$//;
+            my $module = $packman_dir;
+            # Calling isa requires that the installed directory be stripped.
+            $module =~ s:^$installed_dir/::;
+            $module = join ("::", File::Spec->splitdir ($module)) . "::" . $pm;
+            # if it's actually a PackMan module, remember it
+            if ("$module"->isa (__PACKAGE__)) {
+            $concrete{$pm} = $module;
+            }
+        }
     }
     closedir (PACKMANDIR);
 
-    scalar %concrete or
-    croak "No concrete " . __PACKAGE__ . " implementations could be found!";
+    scalar %concrete 
+        or croak "No concrete " . __PACKAGE__ . 
+                 " implementations could be found!";
 
     @preference = grep { defined $concrete{$_} } @preference;
 }
@@ -92,15 +99,15 @@ sub AUTOLOAD {
     our $AUTOLOAD;
 
     if ($AUTOLOAD =~ m/::(\w+)$/ and grep $1 eq $_, keys %concrete) {
-	my $module = $concrete{$1}; # uninitialized hash element error otherwise
-	*{$1} = sub {
-	    ref (shift) and croak $1 . " constructor is a class method";
-	    return ("$module"->new (@_))
-	    };
-	die $@ if $@;
-	goto &$1;
+        my $module = $concrete{$1}; # uninitialized hash element error otherwise
+        *{$1} = sub {
+            ref (shift) and croak $1 . " constructor is a class method";
+            return ("$module"->new (@_))
+            };
+        die $@ if $@;
+        goto &$1;
     } else {
-	die "$_[0] does not understand $AUTOLOAD\n";
+        die "$_[0] does not understand $AUTOLOAD\n";
     }
 }
 
@@ -111,22 +118,22 @@ sub new {
     # require clauses are not necessary here, since each module's been
     # require'd in the BEGIN block to determine if it's actually a PackMan
     # object.
-    ref (shift) and
-	croak __PACKAGE__ . " constructor is a class method.";
+    ref (shift)
+        and croak __PACKAGE__ . " constructor is a class method.";
 
     foreach my $pm (@preference) {
-	if ("$concrete{$pm}"->usable (@_)) {
-	    # first come, first served
-	    return ("$concrete{$pm}"->new (@_));
-	}
+        if ("$concrete{$pm}"->usable (@_)) {
+            # first come, first served
+            return ("$concrete{$pm}"->new (@_));
+        }
     }
     # Wasn't found among the preferences, second chance, all of %concrete
     # Can this be made more efficient by filtering out all values belonging to
     # modules in @preferences? Perhaps.
     foreach my $pm (values %concrete) {
-	if ("$pm"->usable (@_)) {
-	    return ("$pm"->new (@_));
-	}
+        if ("$pm"->usable (@_)) {
+            return ("$pm"->new (@_));
+        }
     }
     # Here, we're solidly S.O.L.
     croak "No usable concrete " . __PACKAGE__ . " module was found.";
@@ -153,16 +160,16 @@ sub DESTROY {
 sub chroot {
     ref (my $self = shift) or croak "chroot is an instance method";
     if (@_) {
-	my $chroot = shift;
-	if (defined ($chroot) && (($chroot =~ m/\s+/) || ! ($chroot =~ m/^\//))) {
-	    croak "Root value invalid " .
-		"(contains whitespace or doesn't start with /)";
-	} else {
-	    $self->{ChRoot} = $chroot;
-	}
-	return ($self);
+    my $chroot = shift;
+    if (defined ($chroot) && (($chroot =~ m/\s+/) || ! ($chroot =~ m/^\//))) {
+        croak "Root value invalid " .
+        "(contains whitespace or doesn't start with /)";
     } else {
-	return ($self->{ChRoot});
+        $self->{ChRoot} = $chroot;
+    }
+    return ($self);
+    } else {
+    return ($self->{ChRoot});
     }
 }
 
@@ -171,11 +178,11 @@ sub chroot {
 sub repo {
     ref (my $self = shift) or croak "repo is an instance method";
     if (@_) {
-	my @repos = @_;
-	$self->{Repos} = \@repos;
-	return (scalar(@repos));
+    my @repos = @_;
+    $self->{Repos} = \@repos;
+    return (scalar(@repos));
     } else {
-	return 0;
+    return 0;
     }
 }
 
@@ -185,10 +192,10 @@ sub repo {
 sub progress {
     ref (my $self = shift) or croak "progress is an instance method";
     if (@_) {
-	$self->{Progress} = 1;
-	$self->{progress_value} = 0;
+    $self->{Progress} = 1;
+    $self->{progress_value} = 0;
     } else {
-	undef $self->{Progress};
+    undef $self->{Progress};
     }
 }
 
@@ -200,18 +207,23 @@ sub output_callback {
     ref (my $self = shift) or croak "output_callback is an instance method";
     my $callback = shift;
     if (ref($callback) ne "CODE") {
-	croak("callback should be a reference to a function!");
+    croak("callback should be a reference to a function!");
     }
     $self->{Callback} = $callback;
     if (@_) {
-	my @callback_args = @_;
-	$self->{Callback_Args} = \@callback_args;
+    my @callback_args = @_;
+    $self->{Callback_Args} = \@callback_args;
     }
 }
 
-# bit of boilerplate for completely handling the #chroot and guaranteeing
+# Bit of boilerplate for completely handling the #chroot and guaranteeing
 # certain properties of the #args tags in *_command_line returned strings.
 # Also breaks off the command name for separate handling.
+#
+# Return: aggregatable, ??
+#         command, the command that actually needs to be executed,
+#         cl, ???
+#         success, the error code.
 sub command_helper {
     ref (my $self = shift) or croak "command_helper is an instance method";
     my $command_line_helper = shift;
@@ -222,86 +234,94 @@ sub command_helper {
     $cl = join (" ", @command_line);
     my $chroot_arg;
 
+    print "No repositories available with this PackMan object\n" 
+        if ($verbose && !defined ($self->{Repos}));
     # repositories replacement
     if (defined ($self->{Repos})) {
-	# substitute value of $Repos into implementation's repo_arg_command_line
-	$self->can ('repo_arg_command_line') or
-	    croak "Concrete " . __PACKAGE__ . " module doesn't implement method " .
-	    "repo_arg_command_line";
+        # substitute value of $Repos into implementation's repo_arg_command_line
+        $self->can ('repo_arg_command_line') or
+            croak "Concrete " . __PACKAGE__ . " module doesn't implement method " .
+            "repo_arg_command_line";
 
-	# do we need to add repository at all?
-	if ($cl =~ m,#repos,) {
-	    my @repos_args;
-	    for my $r (@{$self->{Repos}}) {
-		my $tmp = $self->repo_arg_command_line;
-		$tmp =~ s/#repo/$r/g;
-		push @repos_args, $tmp;
-	    }
-	    my $repos = join(" ",@repos_args);
-	    $cl =~ s/#repos/$repos/g;
-	}
+        # do we need to add repository at all?
+        if ($cl =~ m/#repos/) {
+            my @repos_args;
+            for my $r (@{$self->{Repos}}) {
+                my $tmp = $self->repo_arg_command_line;
+                $tmp =~ s/#repo/$r/g;
+                push @repos_args, $tmp;
+            }
+            my $repos = join(" ",@repos_args);
+            $cl =~ s/#repos/$repos/g;
+        }
     }
 
     # chroot replacement
     if (defined ($self->{ChRoot})) {
-	# substitute value of $ChRoot into implementation's chroot_arg_command_line
-	$self->can ('chroot_arg_command_line') or
-	    croak "Concrete " . __PACKAGE__ . " module doesn't implement method " .
-	    "chroot_arg_command_line";
+        # substitute value of $ChRoot into implementation's
+        # chroot_arg_command_line
+        $self->can ('chroot_arg_command_line') or
+            croak "Concrete " . __PACKAGE__ . 
+                  " module doesn't implement method " .
+                  "chroot_arg_command_line";
 
-	if ($command_line_helper =~ m/^smart_/) {
-	    $chroot_arg = $self->smart_chroot_arg_command_line;
-	} else {
-	    $chroot_arg = $self->chroot_arg_command_line;
-	}
+        if ($command_line_helper =~ m/^smart_/) {
+            $chroot_arg = $self->smart_chroot_arg_command_line;
+        } else {
+            $chroot_arg = $self->chroot_arg_command_line;
+        }
 
-	if ($chroot_arg =~ m/#chroot/) {
-	    # put everywhere #chroot tag is
-	    $chroot_arg =~ s/#chroot/$self->{ChRoot}/g;
-	} else {
-	    # put on end
-	    $chroot_arg = $chroot_arg . " " . $self->{ChRoot};
-	}
+        if ($chroot_arg =~ m/#chroot/) {
+            # put everywhere #chroot tag is
+            $chroot_arg =~ s/#chroot/$self->{ChRoot}/g;
+        } else {
+            # put on end
+            $chroot_arg = $chroot_arg . " " . $self->{ChRoot};
+        }
 
-	# substitute value of $chroot_arg into implementations
-	if ($cl =~ m/#chroot/) {
-	    # put everywhere #chroot tag is
-	    $cl =~ s/#chroot/$chroot_arg/g;
-	} elsif ($cl =~ m/#args/) {
-	    # put in front of first #args tag
-	    $cl =~ s/#args/$chroot_arg #args/;
-	} else {
-	    # put on end
-	    $cl = $cl . " " . $chroot_arg;
-	}
+        # substitute value of $chroot_arg into implementations
+        if ($cl =~ m/#chroot/) {
+            # put everywhere #chroot tag is
+            $cl =~ s/#chroot/$chroot_arg/g;
+        } elsif ($cl =~ m/#args/) {
+            # put in front of first #args tag
+            $cl =~ s/#args/$chroot_arg #args/;
+        } else {
+            # put on end
+            $cl = $cl . " " . $chroot_arg;
+        }
     } else {
-	# just clear $cl of any #chroot tags
-	$cl =~ s/#chroot//g;
+        # just clear $cl of any #chroot tags
+        $cl =~ s/#chroot//g;
     }
 
     # guarantee that there's a #args tag somewhere
-    if (! ($cl =~ m/#args/)) {
-	$cl = $cl . " #args";
+    if (! ($cl =~ m/#args/) ) {
+        $cl = $cl . " #args";
     }
     return ($aggregatable, $command, $cl, $success);
 }
 
+################################################################################
+# Template for command operations.
 #
-# template for command operations
-#
+# Return: SUCCESS if success, ERROR else.
+################################################################################
 sub do_simple_command {
     my $self = shift;
     my $command_name = shift;
     local *SYSTEM;
 
-    ref ($self) or croak $command_name . " is an instance method";
-    $self->can ($command_name . '_command_line') or
-	croak "Concrete " . __PACKAGE__ . " module implements neither method " .
-	$command_name . "install nor " . $command_name . "_command_line";
+    ref ($self) 
+        or return (ERROR, $command_name . " is an instance method");
+    $self->can ($command_name . '_command_line') 
+        or return (ERROR, "Concrete " . __PACKAGE__ . " module implements ".
+                          "neither method " . $command_name . "install nor " .
+                          $command_name . "_command_line");
 
-    my @lov = @_;	# list of victims
+    my @lov = @_;    # list of victims
     my ($aggregatable, $command, $cl) =
-	$self->command_helper ($command_name . '_command_line');
+        $self->command_helper ($command_name . '_command_line');
     my @captured_output;
     my $retval = 0;
     my ($callback, $cbargs, $line);
@@ -314,72 +334,77 @@ sub do_simple_command {
     # Without it yum doesn't show progress information.
     my $pty = "/usr/bin/ptty_try";
     if (-x $pty) {
-	$command = "$pty $command";
+        $command = "$pty $command";
     }
 
     my $rr = 0;
     if ($aggregatable) {
-	@captured_output = undef;
-	my $all_args = join " ", @lov;
-	$cl =~ s/#args/$all_args/g;
+        @captured_output = undef;
+        my $all_args = join " ", @lov;
+        $cl =~ s/#args/$all_args/g;
 
-	my $pid = open(SYSTEM, "-|");
-	defined ($pid) or die "can't fork: $!";
+        print "Command to execute: $command $cl\n" if $verbose;
+        my $pid = open(SYSTEM, "-|");
+        defined ($pid) 
+            or return (ERROR, "can't fork: $!");
 
-	if ($pid) {
-	    #
-	    # parent
-	    #
-	    while ($line = <SYSTEM>) {
-	    	chomp $line;
-	    	push @captured_output, $line;
-		$rr = $self->progress_handler($line);
-		$retval = 1 if ($rr);
-	    	if ($callback) {
-	    	    &{$callback}($line, @{$cbargs});
-	    	}
-	    }
-	    close SYSTEM;
-	    my $err = $?;
-	    if ($retval == 0) {
-		$retval = $err;
-	    }
-	} else {
-	    #
-	    # child
-	    #
-
-	    exec ("$command $cl") or die "can't exec program: $!";
-	}
+        if ($pid) {
+            #
+            # parent
+            #
+            while ($line = <SYSTEM>) {
+                chomp $line;
+                push @captured_output, $line;
+                $rr = $self->progress_handler($line);
+                $retval = 1 if ($rr);
+                if ($callback) {
+                    &{$callback}($line, @{$cbargs});
+                }
+            }
+            close SYSTEM;
+            my $err = $?;
+            if ($retval == 0) {
+                $retval = $err;
+            }
+        } else {
+            #
+            # child
+            #
+            exec ("$command $cl") 
+                or return (ERROR, "can't exec program: $!");
+        }
     } else {
-	foreach my $package (@lov) {
-	    @captured_output = undef;
-	    my $pid = open (SYSTEM, "-|");
-	    defined ($pid) or die "cannot fork: $!";
-	    select SYSTEM; $| = 1;  # try to make unbuffered
-	    if ($pid) {
-		while ($line = <SYSTEM>) {
-		    chomp $line;
-		    push @captured_output, $line;
-		    $rr = $self->progress_handler($line);
-		    $retval = 1 if ($rr);
-		    if ($callback) {
-			&{$callback}($line, @{$cbargs});
-		    }
-		}
-		close (SYSTEM);
-		my $err = $?;
-		if ($retval == 0) {
-		    $retval = $err;
-		}
-	    } else {
-		my $line = $cl;
-		$line =~ s/#args/$package/g;
-		exec ("$command $line") or die "can't exec program: $!";
-	    }
-	}
+        foreach my $package (@lov) {
+            @captured_output = undef;
+            my $pid = open (SYSTEM, "-|");
+            defined ($pid) 
+                or return (ERROR, "cannot fork: $!");
+            select SYSTEM; $| = 1;  # try to make unbuffered
+            if ($pid) {
+                while ($line = <SYSTEM>) {
+                    chomp $line;
+                    push @captured_output, $line;
+                    $rr = $self->progress_handler($line);
+                    $retval = ERROR if ($rr);
+                    if ($callback) {
+                        &{$callback}($line, @{$cbargs});
+                    }
+                }
+                close (SYSTEM);
+                my $err = $?;
+                if ($retval == 0) {
+                    $retval = $err;
+                }
+            } else {
+                my $line = $cl;
+                $line =~ s/#args/$package/g;
+                exec ("$command $line") 
+                    or return (ERROR, "can't exec program: $!");
+            }
+        }
     }
-    return (($retval?0:1), @captured_output);
+
+    return ($retval, @captured_output);
 }
 
 # Command the underlying package manager to install each of the package files
@@ -390,10 +415,11 @@ sub do_simple_command {
 #
 # [Erich Focht]: this command is deprecated. Use smart_install instead.
 
-sub install {
-    ref (my $self = shift) or croak "install is an instance method";
+sub install ($@) {
+    ref (my $self = shift) 
+        or return (ERROR, "install is an instance method");
     if ((scalar @_) == 0) {
-	return (0);
+        return (SUCCESS);
     }
     return ($self->do_simple_command ('install', @_));
 }
@@ -405,8 +431,9 @@ sub install {
 # the operation of the underlying package manager.
 #
 # [Erich Focht]: this command is deprecated. Use smart_install instead.
-sub update {
-    ref (my $self = shift) or croak "update is an instance method";
+sub update ($@) {
+    ref (my $self = shift) 
+        or return (ERROR, "update is an instance method");
     return ($self->do_simple_command ('update', @_));
 }
 
@@ -418,9 +445,10 @@ sub update {
 #
 # [Erich Focht]: this command is deprecated. Use smart_install instead.
 sub remove {
-    ref (my $self = shift) or croak "remove is an instance method";
+    ref (my $self = shift) 
+        or return (ERROR, "remove is an instance method");
     if ((scalar @_) == 0) {
-	return (0);
+        return (SUCCESS);
     }
     return ($self->do_simple_command ('remove', @_));
 }
@@ -428,29 +456,35 @@ sub remove {
 
 # Command the smart package manager to install each of the package files
 # in the argument list and resolve dependencies automatically.
-# Returns a pair of values: ($err, $out_ref)
-# $err contains a failure value if any of the operations fails.
-# $out_ref is a reference to an array containing the output of the command.
 # Smart installs should allways run in aggregated mode.
-sub smart_install {
-    ref (my $self = shift) or croak "smart_install is an instance method";
+#
+# Return: a pair of values: ($err, $out_ref)
+#         - $err contains a failure value if any of the operations fails.
+#         - $out_ref is a reference to an array containing the output of the
+#           command.
+sub smart_install ($@) {
+    ref (my $self = shift) 
+        or return (ERROR, "smart_install is an instance method");
     if ((scalar @_) == 0) {
-	return (0);
+        return (SUCCESS, "");
     }
     return ($self->do_simple_command ('smart_install', @_));
 }
 
 # Command the smart package manager to remove each of the package files
 # in the argument list. It also removes all packages depending on these ones!
-# Returns a pair of values: ($err, $out_ref)
-# $err contains a failure value if any of the operations fails.
-# $out_ref is a reference to an array containing the output of the command.
+#
+# Return: a pair of values: ($err, $out_ref)
+#         - $err contains a failure value if any of the operations fails.
+#         - $out_ref is a reference to an array containing the output of the
+#           command.
 sub smart_remove {
-    ref (my $self = shift) or croak "smart_remove is an instance method";
+    ref (my $self = shift) 
+        or return (ERROR, "smart_remove is an instance method");
     if ((scalar @_) == 0) {
-	return (0);
+        return (SUCCESS, "");
     }
-    return ($self->do_simple_command ('smart_remove', @_));
+    return ($self-> ('smart_remove', @_));
 }
 
 # Command the smart package manager to update each of the package files
@@ -460,19 +494,22 @@ sub smart_remove {
 # $err contains a failure value if any of the operations fails.
 # $out_ref is a reference to an array containing the output of the command.
 sub smart_update {
-    ref (my $self = shift) or croak "smart_update is an instance method";
+    ref (my $self = shift) 
+        or return (ERROR, "smart_update is an instance method");
     return ($self->do_simple_command ('smart_update', @_));
 }
 
 # Clean all smart package manager caches
 sub clean {
-    ref (my $self = shift) or croak "clean is an instance method";
+    ref (my $self = shift) 
+        or return (ERROR, "clean is an instance method");
     return ($self->do_clean);
 }
 
 # Generate repository caches for local repositories
 sub gencache {
-    ref (my $self = shift) or croak "gencache is an instance method";
+    ref (my $self = shift) 
+        or return (ERROR, "gencache is an instance method");
     return ($self->do_simple_command ('gencache', @_));
 }
 
@@ -491,30 +528,33 @@ sub gencache {
 #          }
 #
 sub query_installed {
-    ref (my $self = shift) or croak "query_installed is an instance method";
+    ref (my $self = shift) 
+        or return (ERROR, "query_installed is an instance method");
     my %installed;
 
     # save existing callback
     my ($save_cb, $save_cba);
     if ($self->{Callback}) {
-	$save_cb = $self->{Callback};
-	$save_cba = $self->{Callback_Args};
+        $save_cb = $self->{Callback};
+        $save_cba = $self->{Callback_Args};
     }
 
     # filter routine to be used as temporary callback
     sub filter_installed {
-	my ($line, $installed) = @_;
-	if ($line =~ m/^found: (\S+) (\S+) (\S+)$/) {
-	    my $name = $1;
-	    my $version = $2;
-	    my $arch = $3;
-	    if (exists($installed->{$name})) {
-		push @{$installed->{$name}}, { version => $version, arch => $arch };
-	    } else {
-		$installed->{$name} = [ { version => $version, arch => $arch } ];
-	    }
-	    vprint("PM:filter_installed: $line\n");
-	}
+        my ($line, $installed) = @_;
+        if ($line =~ m/^found: (\S+) (\S+) (\S+)$/) {
+            my $name = $1;
+            my $version = $2;
+            my $arch = $3;
+            if (exists($installed->{$name})) {
+                push (@{$installed->{$name}},
+                     { version => $version, arch => $arch });
+            } else {
+                $installed->{$name} 
+                    = [ { version => $version, arch => $arch } ];
+            }
+            vprint("PM:filter_installed: $line\n");
+        }
     }
 
     # register temporary callback
@@ -523,10 +563,10 @@ sub query_installed {
     # execute command and temporary callback for each output line
     $self->do_simple_command('query_installed', @_);
     if ($save_cb) {
-	$self->output_callback($save_cb, @{$save_cba});
+        $self->output_callback($save_cb, @{$save_cba});
     } else {
-	delete $self->{Callback};
-	delete $self->{Callback_Args};
+        delete $self->{Callback};
+        delete $self->{Callback_Args};
     }
     vprint("PM:query_installed: returns:\n".Dumper(\%installed)."\n");
     return \%installed;
@@ -540,31 +580,32 @@ sub query_installed {
 # @list is the list of packages which are not installed
 #
 sub check_installed {
-    ref (my $self = shift) or croak "check_installed is an instance method";
+    ref (my $self = shift) 
+        or return (ERROR, "check_installed is an instance method");
     my (@pkgs) = @_;
 
     my $installed = $self->query_installed(@pkgs);
     my @match;
     for (keys(%{$installed})) {
-	push @match, "\Q$_";
-	for my $p (@{$installed->{$_}}) {
-	    push @match, "\Q$_".".".$p->{arch};
-	}
+        push @match, "\Q$_";
+        for my $p (@{$installed->{$_}}) {
+            push @match, "\Q$_".".".$p->{arch};
+        }
     }
     my $match = join("|", @match);
     my @failed;
     # match targetted packages with installed package names
     for my $p (@pkgs) {
-	if ($p !~ m/^($match)$/) {
-	    push @failed, $p;
-	}
+        if ($p !~ m/^($match)$/) {
+            push @failed, $p;
+        }
     }
     my @really_failed;
     # check if failed packages are capabilities
     for (@failed) {
-	if ($self->whatprovides($_) eq "") {
-	    push @really_failed, $_;
-	}
+        if ($self->whatprovides($_) eq "") {
+            push @really_failed, $_;
+        }
     }
     return @really_failed;
 }
@@ -575,9 +616,10 @@ sub check_installed {
 # Usage:
 #    ($err, @list) = $pm->search_repo("pattern");
 sub search_repo {
-    ref (my $self = shift) or croak "search_repo is an instance method";
+    ref (my $self = shift) 
+        or return (ERROR, "search_repo is an instance method");
     if (scalar(@_) == 1) {
-	croak "ERROR: Need exactly one argument for search_repo!\n";
+        return (ERROR, "ERROR: Need exactly one argument for search_repo!\n");
     }
     return ($self->do_simple_command ('search_repo', @_));
 }
@@ -593,14 +635,16 @@ sub search_repo {
 # export repositories belonging to the current packman instance
 # through httpd
 sub repo_export {
-    ref (my $self = shift) or croak "repo_export is an instance method";
+    ref (my $self = shift) 
+        or return (ERROR, "repo_export is an instance method");
     return add_httpd_conf(@{$self->{Repos}});
 }
 
 # unexport repositories belonging to the current packman instance
 # through httpd
 sub repo_unexport {
-    ref (my $self = shift) or croak "repo_unexport is an instance method";
+    ref (my $self = shift) 
+        or return (ERROR, "repo_unexport is an instance method");
     return del_httpd_conf(@{$self->{Repos}});
 }
 
@@ -609,15 +653,16 @@ sub repo_unexport {
 sub find_httpdir {
     my $httpdir;
     for my $d ("httpd", "apache", "apache2") {
-	if (-d "/etc/$d/conf.d") {
-	    $httpdir = "/etc/$d/conf.d";
-	    last;
-	}
+        if (-d "/etc/$d/conf.d") {
+            $httpdir = "/etc/$d/conf.d";
+            last;
+        }
     }
     vprint("Found httpdir = $httpdir\n");
     return $httpdir;
 }
 
+# Return: 0 if success, else the number of errors that occured.
 sub add_httpd_conf {
     my (@repos) = @_;
     my $httpdir = find_httpdir();
@@ -625,43 +670,44 @@ sub add_httpd_conf {
     my $err = 0;
     chomp(my $hostname = `hostname`);
     if ($httpdir) {
-	for my $repo (@repos) {
-	    if ($repo =~ /^(file:\/|\/)/) {
-		$repo =~ s|^file:||;
-		if (!-d $repo) {
-		    print "Could not find directory $repo. Skipping.\n";
-		    $err++;
-		    next;
-		}
-		my $pname = "repo$repo";
-		my $rname = $pname;
-		$rname =~ s:/:_:g;
-		my $cname = "$httpdir/$rname.conf";
-		if (-f $cname) {
-		    print "Config file $cname already existing. Skipping.\n";
-		    next;
-		}
-		print "Exporting $repo through httpd, http://$hostname/$pname\n";
-		open COUT, ">$cname" or die "Could not open $cname : $!";
-		print COUT "Alias /$pname $repo\n";
-		print COUT "<Directory $repo/>\n";
-		print COUT "  Options Indexes\n";
-		print COUT "  order allow,deny\n";
-		print COUT "  allow from all\n";
-		print COUT "</Directory>\n";
-		close COUT;
-		++$changed;
-	    } else {
-		print "Repository URL is not a local absolute path!\n";
-		print "Skipping $repo\n";
-		$err++;
-		next;
-	    }
-	}
+        for my $repo (@repos) {
+            if ($repo =~ /^(file:\/|\/)/) {
+                $repo =~ s|^file:||;
+                if (!-d $repo) {
+                    print "Could not find directory $repo. Skipping.\n";
+                    $err++;
+                    next;
+                }
+                my $pname = "repo$repo";
+                my $rname = $pname;
+                $rname =~ s:/:_:g;
+                my $cname = "$httpdir/$rname.conf";
+                if (-f $cname) {
+                    print "Config file $cname already existing. Skipping.\n";
+                    next;
+                }
+                print "Exporting $repo through httpd, ".
+                      "http://$hostname/$pname\n";
+                open COUT, ">$cname" or die "Could not open $cname : $!";
+                print COUT "Alias /$pname $repo\n";
+                print COUT "<Directory $repo/>\n";
+                print COUT "  Options Indexes\n";
+                print COUT "  order allow,deny\n";
+                print COUT "  allow from all\n";
+                print COUT "</Directory>\n";
+                close COUT;
+                ++$changed;
+            } else {
+                print "Repository URL is not a local absolute path!\n";
+                print "Skipping $repo\n";
+                $err++;
+                next;
+            }
+        }
     } else {
-	print "Could not find directory $httpdir!\n";
-	print "Cannot setup httpd configuration for repositories.\n";
-	$err++;
+        print "Could not find directory $httpdir!\n";
+        print "Cannot setup httpd configuration for repositories.\n";
+        $err++;
     }
     restart_httpd() if ($changed);
     return $err;
@@ -673,33 +719,33 @@ sub del_httpd_conf {
     my $changed = 0;
     my $err = 0;
     if ($httpdir) {
-	for my $repo (@repos) {
-	    if ($repo =~ /^(file:\/|\/)/) {
-		$repo =~ s|^file:||;
-		my $pname = "repo$repo";
-		my $rname = $pname;
-		$rname =~ s:/:_:g;
-		my $cname = "$httpdir/$rname.conf";
-		if (-f $cname) {
-		    print "Deleting config file $cname\n";
-		    if (unlink($cname)) {
-			print "WARNING: Could not delete $cname : $!\n";
-			$err++;
-		    } else {
-			++$changed;
-		    }
-		}
-	    } else {
-		print "Repository URL is not a local absolute path!\n";
-		print "Skipping $repo\n";
-		$err++;
-		next;
-	    }
-	}
+    for my $repo (@repos) {
+        if ($repo =~ /^(file:\/|\/)/) {
+            $repo =~ s|^file:||;
+            my $pname = "repo$repo";
+            my $rname = $pname;
+            $rname =~ s:/:_:g;
+            my $cname = "$httpdir/$rname.conf";
+            if (-f $cname) {
+                print "Deleting config file $cname\n";
+                if (unlink($cname)) {
+                print "WARNING: Could not delete $cname : $!\n";
+                $err++;
+                } else {
+                ++$changed;
+                }
+            }
+        } else {
+            print "Repository URL is not a local absolute path!\n";
+            print "Skipping $repo\n";
+            $err++;
+            next;
+        }
+    }
     } else {
-	print "Could not find directory $httpdir!\n";
-	print "Cannot delete httpd configuration for repositories.\n";
-	$err++;
+        print "Could not find directory $httpdir!\n";
+        print "Cannot delete httpd configuration for repositories.\n";
+        $err++;
     }
     restart_httpd() if ($changed);
     return $err;
@@ -708,22 +754,22 @@ sub del_httpd_conf {
 sub list_exported {
     my $httpdir = find_httpdir();
     if ($httpdir) {
-	for my $repoconf (glob("$httpdir/repo_*.conf")) {
-	    my $rname = basename($repoconf,".conf");
-	    my ($dummy, $alias,$rdir) = split(" ",`grep "^Alias" $repoconf`);
-	    chomp $rdir;
-	    print "URL $alias : Repository --repo $rdir\n";
-	}
+        for my $repoconf (glob("$httpdir/repo_*.conf")) {
+            my $rname = basename($repoconf,".conf");
+            my ($dummy, $alias,$rdir) = split(" ",`grep "^Alias" $repoconf`);
+            chomp $rdir;
+            print "URL $alias : Repository --repo $rdir\n";
+        }
     }
 }
 
 sub restart_httpd {
     for my $httpd ("httpd", "httpd2", "apache", "apache2") {
-	if (-x "/etc/init.d/$httpd") {
-	    print "Restarting $httpd\n";
-	    system("/etc/init.d/$httpd restart");
-	    last;
-	}
+        if (-x "/etc/init.d/$httpd") {
+            print "Restarting $httpd\n";
+            system("/etc/init.d/$httpd restart");
+            last;
+        }
     }
 }
 
@@ -765,8 +811,8 @@ PackMan - Perl extension for Package Manager abstraction
 
   $pm->chroot ("/mnt/other_root");
 
-  $pm->chroot ("/");	# wrong, will cause chroot argument substitute anyway
-  $pm->chroot (undef);	# right, no chroot argument will be used
+  $pm->chroot ("/");    # wrong, will cause chroot argument substitute anyway
+  $pm->chroot (undef);    # right, no chroot argument will be used
 
   my $pm_chroot = $pm->chroot;
 
@@ -848,11 +894,11 @@ PackMan - Perl extension for Package Manager abstraction
 
   You can now change $pm back to "/":
 
-  $pm->chroot ("/");	# or $pm->chroot (undef);
+  $pm->chroot ("/");    # or $pm->chroot (undef);
 
   And $chrooted_pm remains pointing at the other directory:
 
-  $chrooted_pm->chroot	# returns "/mnt/my_root"
+  $chrooted_pm->chroot    # returns "/mnt/my_root"
 
   All arguments to the chroot method must be absolute paths (begin
   with "/"), and contain no spaces.
