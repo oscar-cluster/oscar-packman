@@ -1,11 +1,13 @@
-%define binpref /usr/lib/perl5/site_perl/OSCAR
+%define binpref /usr/bin
+%define libpref /usr/lib/perl5/site_perl/OSCAR
 %define manpref /usr/share/man/man3
 %define bintarget $RPM_BUILD_ROOT%{binpref}
+%define libtarget $RPM_BUILD_ROOT%{libpref}
 %define mantarget $RPM_BUILD_ROOT%{manpref}
 
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman-depman
-Version:   		2.9.0
+Version:   		2.9.1
 Release:   		1
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:		OSCAR
@@ -56,14 +58,15 @@ interface. RPMs part.
 %install
 %__rm -rf $RPM_BUILD_ROOT
 
-%__install -m 755 -d %{bintarget}/PackMan
-%__install -m 755 -d %{bintarget}/DepMan
-%__install -m 755 PackMan.pm %{bintarget}
-%__install -m 755 DepMan.pm %{bintarget}
-%__install -m 755 PackMan/RPM.pm %{bintarget}/PackMan
-%__install -m 755 PackMan/DEB.pm %{bintarget}/PackMan
-%__install -m 755 DepMan/UpdateRPMs.pm %{bintarget}/DepMan
-%__install -m 755 DepMan/UpdateDEBs.pm %{bintarget}/DepMan
+%__install -m 755 -d %{libtarget}/PackMan
+%__install -m 755 -d %{libtarget}/DepMan
+%__install -m 755 PackMan.pm %{libtarget}
+%__install -m 755 DepMan.pm %{libtarget}
+%__install -m 755 packman %{bintarget}
+%__install -m 755 PackMan/RPM.pm %{libtarget}/PackMan
+%__install -m 755 PackMan/DEB.pm %{libtarget}/PackMan
+%__install -m 755 DepMan/UpdateRPMs.pm %{libtarget}/DepMan
+%__install -m 755 DepMan/UpdateDEBs.pm %{libtarget}/DepMan
 %__install -m 755 -d		 %{mantarget}
 %__install -m 644 PackMan.3.gz	 %{mantarget}
 %__install -m 644 DepMan.3.gz	 %{mantarget}
@@ -96,6 +99,8 @@ interface. RPMs part.
 
 
 %changelog
+* Sun Jun 22 2008 Geoffroy Vallee <valleegr@ornl.gov> 2.9.1-1
+- new upstream version (see ChangeLog for more details).
 * Thu Nov 08 2007 Erich Focht -> 2.9.0-1
 - fixed query_installed bugs
 - added whatprovides method to RPM module, this is missing in Debian

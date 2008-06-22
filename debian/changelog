@@ -1,3 +1,11 @@
+packman (2.9.1-1) stable; urgency=low
+
+  * New upstream version
+
+  * Add dependencies to rapt, yume, and liboscar.
+
+ -- Geoffroy Vallee <valleegr@ornl.gov>  Sun, 22 Jun 2008 15:13:01 -0400
+
 packman (2.9.0-1) stable; urgency=low
 
   * fixed query_installed bugs
