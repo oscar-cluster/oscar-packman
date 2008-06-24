@@ -1,3 +1,9 @@
+packman-2.9.2:
+* Revisit the Makefile in order to be able to use it on both RPM and Debian
+based systems (the best of the different scripts).
+* Revisit the spec file in order to use the Makefile everytime it is possible
+(easier to maintain the code).
+
 packman-2.9.1:
 * For Debian, switch back to apt-get instead of aptitude; problems with
 untrusted packages.

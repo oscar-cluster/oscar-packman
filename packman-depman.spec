@@ -7,7 +7,7 @@
 
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman-depman
-Version:   		2.9.1
+Version:   		2.9.2
 Release:   		1
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:		OSCAR
@@ -15,7 +15,7 @@ Packager:		Erich Focht <efocht@hpce.nec.com>
 License: 		GPL
 Group:     		Development/Libraries
 Source:			%{name}.tar.gz
-BuildRoot: 		%{_localstatedir}/tmp/%{name}-root
+BuildRoot: 		%{_localstatedir}/%{name}-root
 BuildArch:		noarch
 
 
@@ -47,58 +47,33 @@ interface. RPMs part.
 %setup -n %{name}
 
 %build
-/usr/bin/pod2man --section=3 PackMan.pm		  | gzip > PackMan.3.gz
-/usr/bin/pod2man --section=3 DepMan.pm 		  | gzip > DepMan.3.gz
-/usr/bin/pod2man --section=3 PackMan/RPM.pm	  | gzip > PackMan-RPM.3.gz
-/usr/bin/pod2man --section=3 PackMan/DEB.pm	  | gzip > PackMan-DEB.3.gz
-/usr/bin/pod2man --section=3 DepMan/UpdateRPMs.pm | gzip > DepMan-UpdateRPMs.3.gz
-/usr/bin/pod2man --section=3 DepMan/UpdateDEBs.pm | gzip > DepMan-UpdateDEBs.3.gz
-
+make
 
 %install
 %__rm -rf $RPM_BUILD_ROOT
-
-%__install -m 755 -d %{libtarget}/PackMan
-%__install -m 755 -d %{libtarget}/DepMan
-%__install -m 755 PackMan.pm %{libtarget}
-%__install -m 755 DepMan.pm %{libtarget}
-%__install -m 755 packman %{bintarget}
-%__install -m 755 PackMan/RPM.pm %{libtarget}/PackMan
-%__install -m 755 PackMan/DEB.pm %{libtarget}/PackMan
-%__install -m 755 DepMan/UpdateRPMs.pm %{libtarget}/DepMan
-%__install -m 755 DepMan/UpdateDEBs.pm %{libtarget}/DepMan
-%__install -m 755 -d		 %{mantarget}
-%__install -m 644 PackMan.3.gz	 %{mantarget}
-%__install -m 644 DepMan.3.gz	 %{mantarget}
-%__install -m 644 PackMan-RPM.3.gz	 %{mantarget}
-%__install -m 644 PackMan-DEB.3.gz	 %{mantarget}
-%__install -m 644 DepMan-UpdateRPMs.3.gz %{mantarget}
-%__install -m 644 DepMan-UpdateDEBs.3.gz %{mantarget}
-
+make install DESTDIR=$RPM_BUILD_ROOT LIBDIR=/usr/lib/perl5/site_perl/OSCAR
 
 %clean rpms
 %__rm -rf $RPM_BUILD_ROOT
 
 %files 
 %defattr(-,root,root)
-%{binpref}/PackMan.pm
-%{binpref}/DepMan.pm
+%{binpref}/packman
+%{libpref}/PackMan.pm
 %{manpref}/PackMan.3.*
-%{manpref}/DepMan.3.*
 
 %files rpms
 %defattr(-,root,root)
-%{binpref}/PackMan/RPM.pm
-%{binpref}/PackMan/DEB.pm
-%{binpref}/DepMan/UpdateRPMs.pm
-%{binpref}/DepMan/UpdateDEBs.pm
+%{libpref}/PackManDefs.pm
+%{libpref}/PackMan/RPM.pm
+%{libpref}/PackMan/DEB.pm
 %{manpref}/PackMan-RPM.3.*
 %{manpref}/PackMan-DEB.3.*
-%{manpref}/DepMan-UpdateRPMs.3.*
-%{manpref}/DepMan-UpdateDEBs.3.*
 
 
 %changelog
+* Tue Jun 24 2008 Geoffroy Vallee <valleegr@ornl.gov> 2.9.2-1
+- new upstream version (see ChangeLog for more details).
 * Sun Jun 22 2008 Geoffroy Vallee <valleegr@ornl.gov> 2.9.1-1
 - new upstream version (see ChangeLog for more details).
 * Thu Nov 08 2007 Erich Focht -> 2.9.0-1
