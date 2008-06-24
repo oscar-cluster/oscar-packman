@@ -1,0 +1,103 @@
+#!/usr/bin/env perl 
+#
+# Copyright (c) 2007-2008 Oak Ridge National Laboratory
+#                         Geoffroy Vallee <valleegr@ornl.gov>
+#                         All rights reserved
+#
+# This file is part of the OSCAR software package.  For license
+# information, see the COPYING file in the top level directory of the
+# OSCAR source distribution.
+#
+# $Id$
+#
+
+use strict;
+use warnings "all";
+use Carp;
+use lib "$ENV{OSCAR_HOME}/lib" if $ENV{OSCAR_HOME};
+use OSCAR::PackageSmart;
+use Getopt::Long;
+use Data::Dumper;
+
+my ($prepare_repo);
+my $verbose = 0;
+
+Getopt::Long::Configure("pass_through");
+GetOptions(
+        "prepare-repo=s"                => \$prepare_repo,
+        "verbose"                       => \$verbose,
+        "v"                             => \$verbose,
+        "help"                          => \&help_and_exit,
+        ) || help_and_die();
+
+if ($prepare_repo) {
+    print "Preparing repository $prepare_repo\n" if $verbose;
+    my $pm = OSCAR::PackageSmart::prepare_pool ($verbose, $prepare_repo);
+    if (!defined $pm) {
+        die "ERROR: Impossible to prepare the repository $prepare_repo";
+    } else {
+        print "Repository $prepare_repo is now ready.\n";
+    }
+    exit 0;
+}
+
+sub help () {
+    print "Help: Not yet implemented\n";
+}
+
+sub help_and_die {
+    help ();
+    exit 1;
+}
+
+sub help_and_exit {
+    help ();
+    exit 0;
+}
+
+help_and_die();
+
+exit 1;
+
+
+__END__
+
+=head1 NAME
+
+packman, a command line tool for the PackMan Perl module.
+
+=head1 SYNOPSIS
+
+packman OPTIONS
+
+=head1 DESCRIPTION
+
+???
+
+=head1 SYNTAX
+
+oscar [--prepare-repo]
+
+=head1 OPTIONS
+
+Recognized options include:
+
+=over 1
+
+=item --prepare-repo
+
+=item --help
+
+Help information.
+
+=back
+
+=head1 AUTHOR
+
+Geoffroy Vallee, Oak Ridge National Laboratory <valleegr at ornl dot gov>
+
+=head1 SEE ALSO
+
+perl(1)
+
+=cut
