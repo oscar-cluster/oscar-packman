@@ -19,7 +19,7 @@ Group:     		Development/Libraries
 Source:			%{name}.tar.gz
 BuildRoot: 		%{_localstatedir}/%{name}-root
 BuildArch:		noarch
-Requires:       oscar-libs
+Requires:       oscar-base-libs
 AutoReq :       yes
 Provides:       perl(OSCAR::PackManDefs)
 
