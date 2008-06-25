@@ -29,11 +29,12 @@ clean:
 	rm -f PackMan.3.gz PackMan-RPM.3.gz PackMan-DEB.3.gz
 	rm -f build-stamp configure-stamp
 	rm -rf debian/files debian/packman
-	rm -f ./packman-depman.tar.gz
+	rm -f ./packman.tar.gz
 
 dist: clean
-	rm -rf /tmp/packman-depman
-	mkdir /tmp/packman-depman
-	cp -rf * /tmp/packman-depman
-	cd /tmp; tar czf ./packman-depman.tar.gz packman-depman
-	mv /tmp/packman-depman.tar.gz .
+	rm -rf /tmp/packman
+	mkdir /tmp/packman
+	cp -rf * /tmp/packman
+	cd /tmp/packman; rm -rf `find . -name .svn`
+	cd /tmp; tar czf ./packman.tar.gz packman
+	mv /tmp/packman.tar.gz .

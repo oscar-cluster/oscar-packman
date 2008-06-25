@@ -6,7 +6,7 @@
 %define mantarget $RPM_BUILD_ROOT%{manpref}
 
 Summary:		A package and dependency manager abstraction layer.
-Name:      		packman-depman
+Name:      		packman
 Version:   		2.9.2
 Release:   		1
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
@@ -18,30 +18,12 @@ Source:			%{name}.tar.gz
 BuildRoot: 		%{_localstatedir}/%{name}-root
 BuildArch:		noarch
 
-
-%package rpms
-Summary:		A package and dependency manager abstraction layer, rpm part
-Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
-Distribution:		OSCAR
-Packager:		Erich Focht <efocht@hpce.nec.com>
-License: 		GPL
-Group:     		Development/Libraries
-BuildArch:		noarch
-
-
 %description
 A collection of Perl object modules for use in the OSCAR framework (among
 other places) to facilitate the transparent utilization of the native
 underlying package manager and dependency manager infrastructure across a wide
 range of Linux/UNIX Operating System distributions through a standardized
 interface.
-
-%description rpms
-A collection of Perl object modules for use in the OSCAR framework (among
-other places) to facilitate the transparent utilization of the native
-underlying package manader and dependency manager infrastructure across a wide
-range of Linux/UNIX Operating System distributions through a standardized
-interface. RPMs part.
 
 %prep
 %setup -n %{name}
@@ -61,9 +43,6 @@ make install DESTDIR=$RPM_BUILD_ROOT LIBDIR=/usr/lib/perl5/site_perl/OSCAR
 %{binpref}/packman
 %{libpref}/PackMan.pm
 %{manpref}/PackMan.3.*
-
-%files rpms
-%defattr(-,root,root)
 %{libpref}/PackManDefs.pm
 %{libpref}/PackMan/RPM.pm
 %{libpref}/PackMan/DEB.pm
