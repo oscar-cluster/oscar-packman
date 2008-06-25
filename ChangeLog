@@ -1,3 +1,7 @@
+packman-3.0.0:
+* Remove DepMan, which is deprecated.
+* Match both the Debian and RPM package: a single packman package.
+
 packman-2.9.2:
 * Revisit the Makefile in order to be able to use it on both RPM and Debian
 based systems (the best of the different scripts).

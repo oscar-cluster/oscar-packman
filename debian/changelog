@@ -1,3 +1,9 @@
+packman (3.0.0-1) stable; urgency=low
+
+  * New upstream version. 
+
+ -- Geoffroy Vallee <valleegr@ornl.gov>  Wed, 25 Jun 2008 09:28:42 -0400
+
 packman (2.9.2-1) stable; urgency=low
 
   * New upstream version
