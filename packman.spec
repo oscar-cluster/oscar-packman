@@ -5,10 +5,12 @@
 %define libtarget $RPM_BUILD_ROOT%{libpref}
 %define mantarget $RPM_BUILD_ROOT%{manpref}
 
+%define _use_internal_dependency_generator 0
+
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman
 Version:   		3.0.0
-Release:   		2
+Release:   		3
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:		OSCAR
 Packager:		Erich Focht <efocht@hpce.nec.com>
@@ -18,6 +20,8 @@ Source:			%{name}.tar.gz
 BuildRoot: 		%{_localstatedir}/%{name}-root
 BuildArch:		noarch
 Requires:       oscar-libs
+AutoReq :       yes
+Provides:       perl(OSCAR::PackManDefs)
 
 %description
 A collection of Perl object modules for use in the OSCAR framework (among
@@ -28,6 +32,9 @@ interface.
 
 %prep
 %setup -n %{name}
+# We need to override the RPM dependency auto-detection which screw up
+# dependencies to Perl modules.
+%define __perl_provides %{_builddir}/%{name}-root
 
 %build
 make
@@ -52,6 +59,8 @@ make install DESTDIR=$RPM_BUILD_ROOT LIBDIR=/usr/lib/perl5/site_perl/OSCAR
 
 
 %changelog
+* Wed Jun 25 2008 Geoffroy Vallee <valleegr@ornl.gov> 3.0.0-2
+- overwrite automatic dependencies to Perl modules, otherwise nothing works.
 * Wed Jun 25 2008 Geoffroy Vallee <valleegr@ornl.gov> 3.0.0-2
 - add a dependency with oscar-libs.
 * Wed Jun 25 2008 Geoffroy Vallee <valleegr@ornl.gov> 3.0.0-1
