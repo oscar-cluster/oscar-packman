@@ -11,10 +11,15 @@
 # $Id$
 #
 
+BEGIN {
+    if (defined $ENV{OSCAR_HOME}) {
+        unshift @INC, "$ENV{OSCAR_HOME}/lib";
+    }
+}
+
 use strict;
 use warnings "all";
 use Carp;
-use lib "$ENV{OSCAR_HOME}/lib" if $ENV{OSCAR_HOME};
 use OSCAR::PackageSmart;
 use Getopt::Long;
 use Data::Dumper;
