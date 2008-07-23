@@ -1,3 +1,15 @@
+packman (3.0.2-1) gutsy; urgency=low
+
+  * New upstream version. 
+
+ -- Geoffroy Vallee [gvh] <gvh@gvh1.ornl.gov>  Wed, 23 Jul 2008 11:55:35 -0400
+
+packman (3.0.1-1) stable; urgency=low
+
+  * New upstream version. 
+
+ -- Geoffroy Vallee <valleegr@ornl.gov>  Sun, 29 Jun 2008 00:23:23 -0400
+
 packman (3.0.0-1) stable; urgency=low
 
   * New upstream version. 

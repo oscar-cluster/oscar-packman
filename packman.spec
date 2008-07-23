@@ -9,8 +9,8 @@
 
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman
-Version:   		3.0.0
-Release:   		3
+Version:   		3.0.2
+Release:   		1
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:		OSCAR
 Packager:		Erich Focht <efocht@hpce.nec.com>
@@ -19,7 +19,7 @@ Group:     		Development/Libraries
 Source:			%{name}.tar.gz
 BuildRoot: 		%{_localstatedir}/%{name}-root
 BuildArch:		noarch
-Requires:       oscar-base-libs
+Requires:       oscar-base-libs, yume
 AutoReq :       yes
 Provides:       perl(OSCAR::PackManDefs)
 
@@ -59,7 +59,11 @@ make install DESTDIR=$RPM_BUILD_ROOT LIBDIR=/usr/lib/perl5/site_perl/OSCAR
 
 
 %changelog
-* Wed Jun 25 2008 Geoffroy Vallee <valleegr@ornl.gov> 3.0.0-2
+* Wed Jul 23 2008 Geoffroy Vallee <valleegr@ornl.gov> 3.0.2-1
+- new upstream version (see ChangeLog for more details).
+* Sun Jun 29 2008 Geoffroy Vallee <valleegr@ornl.gov> 3.0.1-1
+- new upstream version (see ChangeLog for more details).
+* Wed Jun 25 2008 Geoffroy Vallee <valleegr@ornl.gov> 3.0.0-3
 - overwrite automatic dependencies to Perl modules, otherwise nothing works.
 * Wed Jun 25 2008 Geoffroy Vallee <valleegr@ornl.gov> 3.0.0-2
 - add a dependency with oscar-libs.

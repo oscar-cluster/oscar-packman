@@ -1,3 +1,10 @@
+packman-3.0.2:
+* Enhance the packman script: no irrelevant warnings when PackMan is directly
+installed on the system (no OSCAR_HOME).
+
+packman-3.0.1:
+* Fix a bug with the packman script.
+
 packman-3.0.0:
 * Remove DepMan, which is deprecated.
 * Match both the Debian and RPM package: a single packman package.
