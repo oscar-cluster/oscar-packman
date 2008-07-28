@@ -941,7 +941,8 @@ PackMan - Perl extension for Package Manager abstraction
   list, that are installed, the second, the ones that
   aren't. query_versions returns a list of the currently installed
   versions all all packages from the argument list, listing the
-  version of packages that aren't actually installed as undef.
+  version of packages that aren't actually installed as undef. Status
+  gives the status of the current packman object.
 
   For suggestions for expansions upon or alterations to this API,
   don't hesitate to e-mail the author. Use "Subject: PackMan: ...".
@@ -959,12 +960,16 @@ PackMan - Perl extension for Package Manager abstraction
   Jeff Squyres, E<lt>jsquyres@lam-mpi.orgE<gt>
   Matt Garrett, E<lt>magarret@OSL.IU.eduE<gt>
   Erich Focht,  E<lt>efocht@hpce.nec.comE<gt>
+  Geoffroy Vallee, E<lt>valleegr@ornl.govE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
   Copyright (c) 2003-2004 The Trustees of Indiana University.
                           All rights reserved.
   Copyright (c) 2005-2006 Erich Focht
+                          All rights reserved.
+  Copyright (c) 2008      Geoffroy Vallee
+                          Oak Ridge National Laboratory
                           All rights reserved.
 
 =cut
