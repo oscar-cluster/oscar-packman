@@ -178,12 +178,34 @@ sub chroot {
 sub repo {
     ref (my $self = shift) or croak "repo is an instance method";
     if (@_) {
-    my @repos = @_;
-    $self->{Repos} = \@repos;
-    return (scalar(@repos));
+        my @repos = @_;
+        my @r;
+        # We do not want to add empty local repositories.
+        foreach my $repo (@repos) {
+            if (OSCAR::PackagePath::repo_local ($repo) == 0
+                || (OSCAR::PackagePath::repo_local ($repo) == 1
+                    && OSCAR::PackagePath::repo_empty ($repo) == 0)) {
+                unshift (@r, $repo);
+            }
+        }
+        $self->{Repos} = \@r;
+        return (scalar(@r));
     } else {
-    return 0;
+        return 0;
     }
+}
+
+sub status {
+    ref (my $self = shift) or croak "status is an instance method";
+    my $str = "";
+    if (defined $self->{Repos}) {
+        my $repo_ref = $self->{Repos};
+        $str .= "Packman status:\n";
+        $str .= "\tNumber of repos: " . scalar (@$repo_ref) . "\n";
+        $str .= "\tList of repos: ". join(", ", @$repo_ref) . "\n" 
+            if scalar (@$repo_ref) > 0;
+    }
+    return $str;
 }
 
 # Set the Progress instance variable for this object.
@@ -253,6 +275,7 @@ sub command_helper {
             }
             my $repos = join(" ",@repos_args);
             $cl =~ s/#repos/$repos/g;
+            system ("echo $cl >> /tmp/toto");
         }
     }
 
@@ -343,7 +366,6 @@ sub do_simple_command {
         my $all_args = join " ", @lov;
         $cl =~ s/#args/$all_args/g;
 
-        print "Command to execute: $command $cl\n" if $verbose;
         my $pid = open(SYSTEM, "-|");
         defined ($pid) 
             or return (ERROR, "can't fork: $!");

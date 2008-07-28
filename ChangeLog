@@ -1,3 +1,8 @@
+packman-3.0.3:
+* Add a status request: gives information about a given packman object.
+* Do not include empty local repositories (they make repository management
+more complex).
+
 packman-3.0.2:
 * Enhance the packman script: no irrelevant warnings when PackMan is directly
 installed on the system (no OSCAR_HOME).

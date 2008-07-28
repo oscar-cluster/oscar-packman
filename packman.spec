@@ -59,6 +59,8 @@ make install DESTDIR=$RPM_BUILD_ROOT LIBDIR=/usr/lib/perl5/site_perl/OSCAR
 
 
 %changelog
+* Mon Jul 28 2008 Geoffroy Vallee <valleegr@ornl.gov> 3.0.3-1
+- new upstream version (see Changelog for more details). 
 * Wed Jul 23 2008 Geoffroy Vallee <valleegr@ornl.gov> 3.0.2-1
 - new upstream version (see ChangeLog for more details).
 * Sun Jun 29 2008 Geoffroy Vallee <valleegr@ornl.gov> 3.0.1-1
