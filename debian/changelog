@@ -1,3 +1,9 @@
+packman (3.0.4-1) gutsy; urgency=low
+
+  * New upsatream version.
+
+ -- Geoffroy Vallee <valleegr@ornl.gov>  Mon, 04 Aug 2008 10:56:39 -0400
+
 packman (3.0.3-1) gutsy; urgency=low
 
   * New upstream version.

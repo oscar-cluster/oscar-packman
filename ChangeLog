@@ -1,3 +1,7 @@
+packman-3.0.4:
+* Fixes bug #460: PackMan from now monitors sub-command execution and detect
+error messages (searching for messages starting by "ERROR").
+
 packman-3.0.3:
 * Add a status request: gives information about a given packman object.
 * Do not include empty local repositories (they make repository management

@@ -14,6 +14,7 @@ use warnings "all";
 use Carp;
 use File::Spec;
 use Data::Dumper;
+use POSIX;
 
 use OSCAR::PackManDefs;
 
@@ -275,7 +276,6 @@ sub command_helper {
             }
             my $repos = join(" ",@repos_args);
             $cl =~ s/#repos/$repos/g;
-            system ("echo $cl >> /tmp/toto");
         }
     }
 
@@ -347,6 +347,7 @@ sub do_simple_command {
         $self->command_helper ($command_name . '_command_line');
     my @captured_output;
     my $retval = 0;
+    my $errors = 0;
     my ($callback, $cbargs, $line);
 
     $callback = $self->{Callback} if (defined($self->{Callback}));
@@ -377,13 +378,17 @@ sub do_simple_command {
             while ($line = <SYSTEM>) {
                 chomp $line;
                 push @captured_output, $line;
+                if ($line =~ /^ERROR/) {
+                    # error detecting during the execution of the child
+                    $errors ++;
+                }
                 $rr = $self->progress_handler($line);
                 $retval = 1 if ($rr);
                 if ($callback) {
-                    &{$callback}($line, @{$cbargs});
+                   &{$callback}($line, @{$cbargs});
                 }
             }
-            close SYSTEM;
+            close (SYSTEM) || print STDERR "ERROR during execution $?\n";
             my $err = $?;
             if ($retval == 0) {
                 $retval = $err;
@@ -392,8 +397,8 @@ sub do_simple_command {
             #
             # child
             #
-            exec ("$command $cl") 
-                or return (ERROR, "can't exec program: $!");
+            exec ("$command $cl")
+                or return (ERROR, "can't exec program ($command $cl): $!");
         }
     } else {
         foreach my $package (@lov) {
@@ -403,8 +408,15 @@ sub do_simple_command {
                 or return (ERROR, "cannot fork: $!");
             select SYSTEM; $| = 1;  # try to make unbuffered
             if ($pid) {
+                #
+                # parent
+                #
                 while ($line = <SYSTEM>) {
                     chomp $line;
+                    if ($line =~ /^ERROR/) {
+                        # error detecting during the execution of the child
+                        $errors ++;
+                    }
                     push @captured_output, $line;
                     $rr = $self->progress_handler($line);
                     $retval = ERROR if ($rr);
@@ -418,14 +430,20 @@ sub do_simple_command {
                     $retval = $err;
                 }
             } else {
+                #
+                # child
+                #
                 my $line = $cl;
                 $line =~ s/#args/$package/g;
                 exec ("$command $line") 
-                    or return (ERROR, "can't exec program: $!");
+                    or return (ERROR, "can't exec program ($command $cl): $!");
             }
         }
     }
 
+    if ($retval == 0 && $errors > 0) {
+        $retval = $errors;
+    }
     return ($retval, @captured_output);
 }
 
@@ -951,16 +969,33 @@ PackMan - Perl extension for Package Manager abstraction
 
   None by default.
 
+=head1 Implementation Details
+
+The execution of commands for the actual management of binary packages
+(installation, removal and so on), using for instance yume or RAPT, is done
+using a child process. This allows PackMan to monitor the progress and 
+sub-command. For instance, if the installation of a binary package leads to the
+creation of a new image, PackMan monitors the progress for the image creation.
+
+=head1 Error Management
+
+Because tools used by PackMan for the management of binary packages are executed
+in a separate process, it is difficult to catch return codes, the process tree
+is quickly complex (especially when ptty_try is used). However, since Packman
+already monitor commands output, we monitor those message in order to catch any
+error messages. Typically, all messages starting by "ERROR" are concidered as
+error messages and handled as an exception by PackMan.
+
 =head1 SEE ALSO
 
   DepMan
 
 =head1 AUTHOR
 
-  Jeff Squyres, E<lt>jsquyres@lam-mpi.orgE<gt>
-  Matt Garrett, E<lt>magarret@OSL.IU.eduE<gt>
-  Erich Focht,  E<lt>efocht@hpce.nec.comE<gt>
-  Geoffroy Vallee, E<lt>valleegr@ornl.govE<gt>
+  Jeff Squyres    <jsquyres@lam-mpi.org>
+  Matt Garrett    <magarret@OSL.IU.edu>
+  Erich Focht     <efocht@hpce.nec.com>
+  Geoffroy Vallee <valleegr@ornl.gov>
 
 =head1 COPYRIGHT AND LICENSE
 

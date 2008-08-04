@@ -73,7 +73,7 @@ sub usable {
     my $aget = system("$chrootcmd apt-get --help >/dev/null 2>&1");
 
     # is rapt installed an in the path?
-    my $rapt = system("$chrootcmd rapt --help >/dev/null 2>&1");
+    my $rapt = system("$chrootcmd /usr/bin/rapt --help >/dev/null 2>&1");
 
     if (!$dpkg && !$aget && !$rapt) {
 	return 1;
@@ -122,6 +122,9 @@ sub progress_handler {
             printf "[progress: %d]\n", $value;
         }
     }
+    if ($line =~ /ERROR/) {
+        return 1;
+    }
     return 0;
 }
 
@@ -164,12 +167,12 @@ sub repo_arg_command_line {
 
 # How rapt installs packages
 sub smart_install_command_line {
-    1,'rapt #repos -y #chroot install #args --allow-unauthenticated'
+    1,'/usr/bin/rapt #repos -y #chroot install #args --allow-unauthenticated'
 }
 
 # How rapt removes packages
 sub smart_remove_command_line {
-    1,'rapt #repos -y #chroot remove #args'
+    1,'/usr/bin/rapt #repos -y #chroot remove #args'
 }
 
 # Generate repository caches
