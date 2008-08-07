@@ -1,3 +1,7 @@
+packman-3.0.5:
+* Fixes bug #474: We automatically detect where the Perl modules should be
+installed.
+
 packman-3.0.4:
 * Fixes bug #460: PackMan from now monitors sub-command execution and detect
 error messages (searching for messages starting by "ERROR").

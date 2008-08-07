@@ -1,4 +1,4 @@
-LIBDIR=usr/lib/perl5/OSCAR/
+include ./Config.mk
 BINDIR=usr/bin
 MANDIR=usr/share/man/man3
 
@@ -9,18 +9,19 @@ all:
 	
 
 install:
-	install -d -m 0755 $(DESTDIR)/$(LIBDIR)
-	install -d -m 0755 $(DESTDIR)/$(LIBDIR)/PackMan/
-	install -d -m 0755 $(DESTDIR)/$(BINDIR)
-	install -d -m 0755 $(DESTDIR)/$(MANDIR)
-	install    -m 0755 packman               $(DESTDIR)/$(BINDIR)
-	install    -m 0755 PackMan.pm            $(DESTDIR)/$(LIBDIR)
-	install    -m 0755 PackManDefs.pm        $(DESTDIR)/$(LIBDIR)
-	install    -m 0755 PackMan/DEB.pm        $(DESTDIR)/$(LIBDIR)/PackMan/
-	install    -m 0755 PackMan/RPM.pm        $(DESTDIR)/$(LIBDIR)/PackMan/
-	install    -m 0644 PackMan.3.gz          $(DESTDIR)/$(MANDIR)
-	install    -m 0644 PackMan-RPM.3.gz      $(DESTDIR)/$(MANDIR)
-	install    -m 0644 PackMan-DEB.3.gz      $(DESTDIR)/$(MANDIR)
+	@echo "Installing Perl modules in $(LIBDIR)"
+	@install -d -m 0755 $(DESTDIR)/$(LIBDIR)
+	@install -d -m 0755 $(DESTDIR)/$(LIBDIR)/PackMan/
+	@install -d -m 0755 $(DESTDIR)/$(BINDIR)
+	@install -d -m 0755 $(DESTDIR)/$(MANDIR)
+	@install    -m 0755 packman               $(DESTDIR)/$(BINDIR)
+	@install    -m 0755 PackMan.pm            $(DESTDIR)/$(LIBDIR)
+	@install    -m 0755 PackManDefs.pm        $(DESTDIR)/$(LIBDIR)
+	@install    -m 0755 PackMan/DEB.pm        $(DESTDIR)/$(LIBDIR)/PackMan/
+	@install    -m 0755 PackMan/RPM.pm        $(DESTDIR)/$(LIBDIR)/PackMan/
+	@install    -m 0644 PackMan.3.gz          $(DESTDIR)/$(MANDIR)
+	@install    -m 0644 PackMan-RPM.3.gz      $(DESTDIR)/$(MANDIR)
+	@install    -m 0644 PackMan-DEB.3.gz      $(DESTDIR)/$(MANDIR)
 
 deb ::
 	dpkg-buildpackage -rfakeroot 
