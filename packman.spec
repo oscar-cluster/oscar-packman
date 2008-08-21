@@ -1,5 +1,4 @@
 %define binpref /usr/bin
-%define libpref /usr/lib/perl5/site_perl/OSCAR
 %define manpref /usr/share/man/man3
 %define bintarget $RPM_BUILD_ROOT%{binpref}
 %define libtarget $RPM_BUILD_ROOT%{libpref}
@@ -41,21 +40,14 @@ make
 
 %install
 %__rm -rf $RPM_BUILD_ROOT
-make install DESTDIR=$RPM_BUILD_ROOT LIBDIR=/usr/lib/perl5/site_perl/OSCAR
+make install DESTDIR=$RPM_BUILD_ROOT
 
 %clean rpms
 %__rm -rf $RPM_BUILD_ROOT
 
 %files 
 %defattr(-,root,root)
-%{binpref}/packman
-%{libpref}/PackMan.pm
-%{manpref}/PackMan.3.*
-%{libpref}/PackManDefs.pm
-%{libpref}/PackMan/RPM.pm
-%{libpref}/PackMan/DEB.pm
-%{manpref}/PackMan-RPM.3.*
-%{manpref}/PackMan-DEB.3.*
+/usr/*
 
 
 %changelog

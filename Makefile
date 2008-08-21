@@ -9,20 +9,20 @@ all:
 	/usr/bin/pod2man --section=3 PackMan/DEB.pm   | gzip > PackMan-DEB.3.gz
 	
 
-install:
-	@echo "Installing Perl modules in $(OSCARLIBDIR)"
-	@install -d -m 0755 $(DESTDIR)/$(OSCARLIBDIR)
-	@install -d -m 0755 $(DESTDIR)/$(OSCARLIBDIR)/PackMan/
-	@install -d -m 0755 $(DESTDIR)/$(BINDIR)
-	@install -d -m 0755 $(DESTDIR)/$(MANDIR)
-	@install    -m 0755 packman               $(DESTDIR)/$(BINDIR)
-	@install    -m 0755 PackMan.pm            $(DESTDIR)/$(OSCARLIBDIR)
-	@install    -m 0755 PackManDefs.pm        $(DESTDIR)/$(OSCARLIBDIR)
-	@install    -m 0755 PackMan/DEB.pm        $(DESTDIR)/$(OSCARLIBDIR)/PackMan/
-	@install    -m 0755 PackMan/RPM.pm        $(DESTDIR)/$(OSCARLIBDIR)/PackMan/
-	@install    -m 0644 PackMan.3.gz          $(DESTDIR)/$(MANDIR)
-	@install    -m 0644 PackMan-RPM.3.gz      $(DESTDIR)/$(MANDIR)
-	@install    -m 0644 PackMan-DEB.3.gz      $(DESTDIR)/$(MANDIR)
+install: all
+	@echo "Installing Perl modules in $(DESTDIR)/$(OSCARLIBDIR)"
+	install -d -m 0755 $(DESTDIR)/$(OSCARLIBDIR)
+	install -d -m 0755 $(DESTDIR)/$(OSCARLIBDIR)/PackMan/
+	install -d -m 0755 $(DESTDIR)/$(BINDIR)
+	install -d -m 0755 $(DESTDIR)/$(MANDIR)
+	install    -m 0755 packman               $(DESTDIR)/$(BINDIR)
+	install    -m 0755 PackMan.pm            $(DESTDIR)/$(OSCARLIBDIR)
+	install    -m 0755 PackManDefs.pm        $(DESTDIR)/$(OSCARLIBDIR)
+	install    -m 0755 PackMan/DEB.pm        $(DESTDIR)/$(OSCARLIBDIR)/PackMan/
+	install    -m 0755 PackMan/RPM.pm        $(DESTDIR)/$(OSCARLIBDIR)/PackMan/
+	install    -m 0644 PackMan.3.gz          $(DESTDIR)/$(MANDIR)
+	install    -m 0644 PackMan-RPM.3.gz      $(DESTDIR)/$(MANDIR)
+	install    -m 0644 PackMan-DEB.3.gz      $(DESTDIR)/$(MANDIR)
 
 deb ::
 	dpkg-buildpackage -rfakeroot 
