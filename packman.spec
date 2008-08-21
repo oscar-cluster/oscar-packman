@@ -51,6 +51,8 @@ make install DESTDIR=$RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Aug 21 2008 Geoffroy Vallee <valleegr@ornl.gov> 3.0.5-1
+- new upstream version (see Changelog for more details).
 * Thu Aug 07 2008 Geoffroy Vallee <valleegr@ornl.gov> 3.0.5-1
 - new upstream version (see Changelog for more details).
 * Mon Aug 04 2008 Geoffroy Vallee <valleegr@ornl.gov> 3.0.4-1

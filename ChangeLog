@@ -2,6 +2,7 @@ packman-3.0.6:
 * Fix a bug introduced in 3.0.5, the location for the installation of Perl
 modules was automatic but we did not add OSCAR in the path, leading with
 issues with the OSCAR core.
+* Install Perl modules in "vendorlib"
 
 packman-3.0.5:
 * Fixes bug #474: We automatically detect where the Perl modules should be
