@@ -32,6 +32,8 @@ my $verbose = $ENV{PACKMAN_VERBOSE};
 # where each PackMan module is located
 my %concrete;
 
+my $format;
+
 my $installed_dir;
 
 # Preloaded methods go here.
@@ -80,7 +82,7 @@ BEGIN {
             $module = join ("::", File::Spec->splitdir ($module)) . "::" . $pm;
             # if it's actually a PackMan module, remember it
             if ("$module"->isa (__PACKAGE__)) {
-            $concrete{$pm} = $module;
+                $concrete{$pm} = $module;
             }
         }
     }
@@ -119,7 +121,8 @@ sub new {
     # require clauses are not necessary here, since each module's been
     # require'd in the BEGIN block to determine if it's actually a PackMan
     # object.
-    ref (shift)
+    my $invocant = shift;
+    ref ($invocant)
         and croak __PACKAGE__ . " constructor is a class method.";
 
     foreach my $pm (@preference) {
@@ -161,16 +164,17 @@ sub DESTROY {
 sub chroot {
     ref (my $self = shift) or croak "chroot is an instance method";
     if (@_) {
-    my $chroot = shift;
-    if (defined ($chroot) && (($chroot =~ m/\s+/) || ! ($chroot =~ m/^\//))) {
-        croak "Root value invalid " .
-        "(contains whitespace or doesn't start with /)";
+        my $chroot = shift;
+        if (defined ($chroot) && (($chroot =~ m/\s+/) 
+            || ! ($chroot =~ m/^\//))) {
+            croak "Root value invalid " .
+                  "(contains whitespace or doesn't start with /)";
+        } else {
+            $self->{ChRoot} = $chroot;
+        }
+        return ($self);
     } else {
-        $self->{ChRoot} = $chroot;
-    }
-    return ($self);
-    } else {
-    return ($self->{ChRoot});
+        return ($self->{ChRoot});
     }
 }
 
@@ -182,6 +186,7 @@ sub repo {
         my @repos = @_;
         my @r;
         # We do not want to add empty local repositories.
+        require OSCAR::PackagePath;
         foreach my $repo (@repos) {
             if (OSCAR::PackagePath::repo_local ($repo) == 0
                 || (OSCAR::PackagePath::repo_local ($repo) == 1
@@ -196,16 +201,34 @@ sub repo {
     }
 }
 
+# Assign a distro id to a PackMan object. The distro id follows the OS_Detect
+# syntax (i.e., debian-4-x86_64). Based on the distro id it is trivial to find
+# the list of repos, and all needed information for package management or even
+# image creation.
+# 
+# Return: 1 if success, 0 else.
+sub distro {
+    ref (my $self = shift) or croak "distro is an instance method";
+    if (@_) {
+        my $distro = shift;
+        # TODO: We should validate the distro ID here.
+        $self->{Distro} = $distro;
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 sub status {
     ref (my $self = shift) or croak "status is an instance method";
-    my $str = "";
-    if (defined $self->{Repos}) {
-        my $repo_ref = $self->{Repos};
-        $str .= "Packman status:\n";
-        $str .= "\tNumber of repos: " . scalar (@$repo_ref) . "\n";
-        $str .= "\tList of repos: ". join(", ", @$repo_ref) . "\n" 
-            if scalar (@$repo_ref) > 0;
-    }
+    my $str = "Packman status:\n";
+    $str .= "\tFormat: ".$self->{Format}."\n";
+    $str .= "\tAssociated distro: " . $self->{Distro} . "\n";
+    $str .= "\tChRoot: " . $self->{ChRoot} . "\n";
+    my $repo_ref = $self->{Repos};
+    $str .= "\tNumber of repos: " . scalar (@$repo_ref) . "\n";
+    $str .= "\tList of repos: ". join(", ", @$repo_ref) . "\n"
+        if scalar (@$repo_ref) > 0;
     return $str;
 }
 
@@ -215,10 +238,10 @@ sub status {
 sub progress {
     ref (my $self = shift) or croak "progress is an instance method";
     if (@_) {
-    $self->{Progress} = 1;
-    $self->{progress_value} = 0;
+        $self->{Progress} = 1;
+        $self->{progress_value} = 0;
     } else {
-    undef $self->{Progress};
+        undef $self->{Progress};
     }
 }
 
@@ -230,12 +253,12 @@ sub output_callback {
     ref (my $self = shift) or croak "output_callback is an instance method";
     my $callback = shift;
     if (ref($callback) ne "CODE") {
-    croak("callback should be a reference to a function!");
+        croak("callback should be a reference to a function!");
     }
     $self->{Callback} = $callback;
     if (@_) {
-    my @callback_args = @_;
-    $self->{Callback_Args} = \@callback_args;
+        my @callback_args = @_;
+        $self->{Callback_Args} = \@callback_args;
     }
 }
 
@@ -263,8 +286,9 @@ sub command_helper {
     if (defined ($self->{Repos})) {
         # substitute value of $Repos into implementation's repo_arg_command_line
         $self->can ('repo_arg_command_line') or
-            croak "Concrete " . __PACKAGE__ . " module doesn't implement method " .
-            "repo_arg_command_line";
+            croak "Concrete " . __PACKAGE__ 
+                  . " module doesn't implement method "
+                  . "repo_arg_command_line";
 
         # do we need to add repository at all?
         if ($cl =~ m/#repos/) {
@@ -277,6 +301,28 @@ sub command_helper {
             my $repos = join(" ",@repos_args);
             $cl =~ s/#repos/$repos/g;
         }
+    }
+
+    if (defined ($self->{Distro})) {
+        # substitute value of $Distro into implementation's
+        # repo_arg_command_line
+        $self->can ('distro_arg_command_line') or
+            croak "Concrete " . __PACKAGE__ 
+                  . " module doesn't implement method "
+                  . "distro_arg_command_line";
+
+        print STDERR "[PackMan] ---> $cl\n";
+        if ($cl =~ m/#distro/) {
+            my $tmp = $self->distro_arg_command_line;
+            my $d = $self->{Distro};
+            $tmp =~ s/#distro/$d/g;
+            $cl =~ s/#distro/$tmp/g;
+            $cl =~ s/#distro//g;
+        }
+    } else {
+        # if no distro is specified, we just remove the #distro string from
+        # the command
+        $cl =~ s/#distro//g;
     }
 
     # chroot replacement
@@ -366,6 +412,7 @@ sub do_simple_command {
         @captured_output = undef;
         my $all_args = join " ", @lov;
         $cl =~ s/#args/$all_args/g;
+        print "Command to execute: $command $cl\n" if $verbose;
 
         my $pid = open(SYSTEM, "-|");
         defined ($pid) 
@@ -553,6 +600,19 @@ sub gencache {
     return ($self->do_simple_command ('gencache', @_));
 }
 
+# sub query_opkgs ($@) {
+#     my $self = shift;
+#     my @opkgs = @_
+# 
+#     # If the user does not specify any particular OPKG, we assume we want to 
+#     # get data about all available OPKGs.
+#     if (!defined @opkgs) {
+#         push (@opkgs, "*");
+#     }
+# 
+#     return ($self->do_simple_command ('query_opkgs', @opkgs);
+# }
+
 # Query the underlying package manager to report the list of which of the
 # packages in the argument list are presently installed and which are
 # uninstalled.
@@ -655,13 +715,89 @@ sub check_installed {
 #
 # Usage:
 #    ($err, @list) = $pm->search_repo("pattern");
-sub search_repo {
-    ref (my $self = shift) 
+sub search_repo ($$) {
+    ref (my $self = shift)
         or return (ERROR, "search_repo is an instance method");
-    if (scalar(@_) == 1) {
-        return (ERROR, "ERROR: Need exactly one argument for search_repo!\n");
+    my $pattern = shift;
+    return ($self->do_simple_command ('search_repo', $pattern));
+}
+
+sub deb_pkg_data_to_hash ($@) {
+    my ($self, @output) = @_;
+    my ($ver, $rel, $summary, $packager, $desc, $class, $name, $group,
+        $conflicts, $isdesc, $dist);
+    my %o;
+
+    foreach my $line (@output) {
+        next if (!defined $line);
+        chomp $line;
+        if ($line =~ /^Package: (.*)$/) {
+            $name = $1;
+            $isdesc = 0;
+            $ver = $rel = $summary = $packager = $desc = $class = "";
+            $conflicts = "";
+        } elsif ($line =~ /^Version: (.*)$/) {
+            $ver = $1;
+        } elsif ($line =~ /^Section: (.*)$/) {
+            $group = $1;
+            $class = "";
+            if ($group =~ m/^([^:]*):([^:]*)/) {
+                $group = $1;
+                $class = $2;
+            }
+        } elsif ($line =~ /^Maintainer: (.*)$/) {
+            $packager = $1;
+        } elsif ($line =~ /^Conflicts: (.*)$/) {
+            $conflicts = $1;
+        } elsif ($line =~ /^Description: (.*)$/) {
+            $isdesc = 1;
+            $summary = $1;
+        } elsif ($line =~ /^Bugs:/) {
+            $isdesc = 0;
+        } else {
+            if ($isdesc) {
+                if ($line =~ m/^ (.*)$/) {
+                    $desc .= "$1\n";
+                }
+            }
+        }
+         if ($name) {
+            $o{$name} = {
+                package => $name,
+                version => $ver,
+                summary => $summary,
+                packager => $packager,
+                description => $desc,
+                class => $class,
+                group => $group,
+                distro => $dist,
+                conflicts => $conflicts,
+            };
+         }
     }
-    return ($self->do_simple_command ('search_repo', @_));
+    return %o;
+}
+
+
+#
+# Show packages details that matches the passed pattern for a given repository
+#
+# Usage:
+#    ($err, %hash) = $pm->show_repo("list of packages");
+sub show_repo {
+    ref (my $self = shift) 
+        or return (ERROR, "show_repo is an instance method");
+    my $opkgs = shift;
+    my ($ret, @o) = $self->do_simple_command ('show_repo', $opkgs);
+    my %data;
+    if ($self->{Format} eq "DEB") {
+        %data = $self->deb_pkg_data_to_hash (@o);
+    } elsif ($self->{Format} eq "RPM") {
+        %data = $self->rpm_pkg_data_to_hash (@o);
+    } else {
+        return undef;
+    }
+    return ($ret, %data);
 }
 
 # ###

@@ -22,7 +22,7 @@ use base qw(PackMan);
 # boilerplate constructor because PackMan's is "abstract"
 sub new {
   ref (my $class = shift) and croak ("constructor called on instance");
-  my $new  = { ChRoot => shift };
+  my $new  = { ChRoot => shift, Format => "RPM", Distro => undef };
   bless ($new, $class);
   return ($new);
 }

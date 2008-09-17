@@ -39,13 +39,13 @@ use base qw(PackMan);
 # boilerplate constructor because PackMan's is "abstract"
 sub new {
   ref (my $class = shift) and croak ("constructor called on instance");
-  my $new  = { ChRoot => shift };
+  my $new  = { ChRoot => shift, Format => "DEB", Distro => undef };
   bless ($new, $class);
   return ($new);
 }
 
 # convenient constructor alias
-sub DEB { 
+sub DEB {
   return (new (@_)) 
 }
 
@@ -63,7 +63,7 @@ sub usable {
 	if (! ($chroot =~ '^/')) {
 	    croak("chroot argument must be an absolute path.");
 	}
-	$chrootcmd = "chroot $chroot";
+        $chrootcmd = "chroot $chroot";
     }
 
     # is dpkg installed an in the path?
@@ -76,7 +76,7 @@ sub usable {
     my $rapt = system("$chrootcmd /usr/bin/rapt --help >/dev/null 2>&1");
 
     if (!$dpkg && !$aget && !$rapt) {
-	return 1;
+        return 1;
     }
     return 0;
 }
@@ -165,9 +165,14 @@ sub repo_arg_command_line {
     '--repo #repo'
 }
 
+# How rapt handles the specification of a distro
+sub distro_arg_command_line {
+    '--distro #distro'
+}
+
 # How rapt installs packages
 sub smart_install_command_line {
-    1,'/usr/bin/rapt #repos -y #chroot install #args --allow-unauthenticated'
+    1,'/usr/bin/rapt #repos #distro -y #chroot install #args --allow-unauthenticated'
 }
 
 # How rapt removes packages
@@ -181,8 +186,13 @@ sub gencache_command_line {
 }
 
 # How to search packages in a repository
-sub search_repo_update_command_line {
+sub search_repo_command_line {
     1,'rapt #repos #chroot --names-only search \'#args\''
+}
+
+# How to show packages details in a repository
+sub show_repo_command_line {
+    1, 'rapt #repos #chroot show #args'
 }
 
 # Clear apt caches
@@ -204,7 +214,9 @@ sub whatprovides {
 }
 
 1;
+
 __END__
+
 =head1 NAME
 
 PackMan::DEB - Perl extension for Package Manager abstraction for DEBs

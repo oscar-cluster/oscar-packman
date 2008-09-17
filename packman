@@ -24,16 +24,22 @@ use OSCAR::PackageSmart;
 use Getopt::Long;
 use Data::Dumper;
 
-my ($prepare_repo);
-my $verbose = 0;
+my ($prepare_repo, $root, $distro);
+my $verbose = 1;
 
 Getopt::Long::Configure("pass_through");
 GetOptions(
         "prepare-repo=s"                => \$prepare_repo,
+        "root=s"                        => \$root,
         "verbose"                       => \$verbose,
         "v"                             => \$verbose,
         "help"                          => \&help_and_exit,
         ) || help_and_die();
+
+if ($prepare_repo && defined $ARGV[0]) {
+    die "ERROR: it seems you try to do multiple actions at the same time, ".
+        "this is not allowed.";
+}
 
 if ($prepare_repo) {
     print "Preparing repository $prepare_repo\n" if $verbose;
@@ -42,6 +48,42 @@ if ($prepare_repo) {
         die "ERROR: Impossible to prepare the repository $prepare_repo";
     } else {
         print "Repository $prepare_repo is now ready.\n";
+    }
+    exit 0;
+}
+
+if ( $ARGV[0] ne "install" ) {
+    die "ERROR: you try to execute an unsupported command $ARGV[0]";
+} else {
+    if (!defined $distro) {
+        die "ERROR: You must specify which distro to use to manage packages";
+    }
+
+    my @pkgs;
+    my $pos = 1;
+    foreach my $p (1 .. $#ARGV ) {
+        push (@pkgs, $ARGV[$p]);
+        $pos++;
+    }
+    print "INFO: installing the following packages for $distro ";
+    print "(in $root) " if defined $root;
+    OSCAR::Utils::print_array (@pkgs);
+
+    my $pm = PackMan::DEB->new;
+    if (!defined $pm) {
+        die "ERROR: Impossible to create a PackMan object";
+    }
+    if ($pm->distro($distro) == 0) {
+        die "ERROR: Impossible to specify the distro of the PackMan object";
+    }
+    print $pm->status;
+    if (defined $root) {
+        if ($pm->chroot($root) == 0) {
+            die "ERROR: Impossible to specify the root of the PackMan object";
+        }
+    }
+    if ($pm->smart_install(@pkgs) == 0) {
+        die "ERROR: Impossible to install ". join (", ", @pkgs);
     }
     exit 0;
 }
@@ -81,7 +123,7 @@ packman OPTIONS
 
 =head1 SYNTAX
 
-oscar [--prepare-repo]
+packman [--prepare-repo]
 
 =head1 OPTIONS
 
@@ -96,6 +138,11 @@ Recognized options include:
 Help information.
 
 =back
+
+=head1 Examples
+
+=head2 Install the dpkg package into the image stored in /tmp/test
+    sudo packman --root /tmp/test/ --distro ubuntu-7-i386 install dpkg
 
 =head1 AUTHOR
 

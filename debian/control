@@ -8,7 +8,7 @@ Standards-Version: 3.7.2
 Package: packman
 Architecture: all
 Depends: dpkg (>=1.13.22), apt, liboscar
-Recommends: rapt
+Recommends: rapt (>=2.8)
 Suggests: yume
 Description: Package manager abstraction for OSCAR
  A collection of Perl object modules for use in the OSCAR framework (among

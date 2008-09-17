@@ -1,3 +1,9 @@
+packman-3.1.0 (not yet released):
+* Enable to specification of a distro ID (OS_Detect syntax) to a PackMan object.
+* Finalize the support of "show" and "search" commands.
+* Store the concrete module format used in the backend (DEB vs. RPM).
+* Extend the packman script to support package installation.
+
 packman-3.0.6:
 * Fix a bug introduced in 3.0.5, the location for the installation of Perl
 modules was automatic but we did not add OSCAR in the path, leading with
