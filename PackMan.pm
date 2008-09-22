@@ -531,15 +531,15 @@ sub update ($@) {
 # underlying package manager.
 #
 # [Erich Focht]: this command is deprecated. Use smart_install instead.
-sub remove {
-    ref (my $self = shift) 
-        or return (ERROR, "remove is an instance method");
-    if ((scalar @_) == 0) {
-        return (SUCCESS);
-    }
-    return ($self->do_simple_command ('remove', @_));
-}
-
+# sub remove {
+#     ref (my $self = shift) 
+#         or return (ERROR, "remove is an instance method");
+#     if ((scalar @_) == 0) {
+#         return (SUCCESS);
+#     }
+#     return ($self->do_simple_command ('remove', @_));
+# }
+# 
 
 # Command the smart package manager to install each of the package files
 # in the argument list and resolve dependencies automatically.
@@ -721,8 +721,22 @@ sub search_repo ($$) {
     my $pattern = shift;
     my ($rc, @opkgs) = $self->do_simple_command ('search_repo', $pattern);
     for (my $i=0; $i<scalar(@opkgs); $i++) {
+        # We do some cleaning
+        if (!defined $opkgs[$i]) {
+            splice (@opkgs, $i, 1);
+            # if we remove an element, we have to keep the same index in the 
+            # array
+            $i--;
+            next;
+        }
         chomp $opkgs[$i];
         $opkgs[$i] = OSCAR::Utils::trim($opkgs[$i]);
+        if ($opkgs[$i] eq "") {
+            splice (@opkgs, $i, 1);
+            # if we remove an element, we have to keep the same index in the 
+            # array
+            $i--;
+        }
     }
     return ($rc, @opkgs);
 }
