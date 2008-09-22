@@ -32,6 +32,7 @@ clean:
 	rm -f build-stamp configure-stamp
 	rm -rf debian/files debian/packman
 	rm -f ./packman.tar.gz
+	rm -rf deb
 
 dist: clean
 	rm -rf /tmp/packman
