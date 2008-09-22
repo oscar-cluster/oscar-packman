@@ -3,6 +3,7 @@ packman-3.1.0 (not yet released):
 * Finalize the support of "show" and "search" commands.
 * Store the concrete module format used in the backend (DEB vs. RPM).
 * Extend the packman script to support package installation.
+* Disable the remove function which is deprecated.
 
 packman-3.0.6:
 * Fix a bug introduced in 3.0.5, the location for the installation of Perl
