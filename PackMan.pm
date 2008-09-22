@@ -425,7 +425,7 @@ sub do_simple_command {
             while ($line = <SYSTEM>) {
                 chomp $line;
                 push @captured_output, $line;
-                if ($line =~ /^ERROR/) {
+                if ($line =~ /^ERROR/ || $line =~ /^E:/) {
                     # error detecting during the execution of the child
                     $errors ++;
                 }
@@ -460,7 +460,7 @@ sub do_simple_command {
                 #
                 while ($line = <SYSTEM>) {
                     chomp $line;
-                    if ($line =~ /^ERROR/) {
+                    if ($line =~ /^ERROR/ || $line =~ /^E:/) {
                         # error detecting during the execution of the child
                         $errors ++;
                     }
@@ -719,7 +719,12 @@ sub search_repo ($$) {
     ref (my $self = shift)
         or return (ERROR, "search_repo is an instance method");
     my $pattern = shift;
-    return ($self->do_simple_command ('search_repo', $pattern));
+    my ($rc, @opkgs) = $self->do_simple_command ('search_repo', $pattern);
+    for (my $i=0; $i<scalar(@opkgs); $i++) {
+        chomp $opkgs[$i];
+        $opkgs[$i] = OSCAR::Utils::trim($opkgs[$i]);
+    }
+    return ($rc, @opkgs);
 }
 
 sub deb_pkg_data_to_hash ($@) {

@@ -25,7 +25,7 @@ install: all
 	install    -m 0644 PackMan-DEB.3.gz      $(DESTDIR)/$(MANDIR)
 
 deb ::
-	dpkg-buildpackage -rfakeroot 
+	dpkg-buildpackage -rfakeroot
 
 clean:
 	rm -f PackMan.3.gz PackMan-RPM.3.gz PackMan-DEB.3.gz
