@@ -1,3 +1,7 @@
+packman-3.1.2 (not yet released):
+* Finalize the packman script.
+* Clean up the man page and the different Perl docs.
+
 packman-3.1.1:
 * Fix a bug in the declaration and exportation of constants. Now we can use
 them outside of PackMan without warnings or errors.

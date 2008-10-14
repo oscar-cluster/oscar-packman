@@ -224,11 +224,12 @@ sub status {
     my $str = "Packman status:\n";
     $str .= "\tFormat: ".$self->{Format}."\n";
     $str .= "\tAssociated distro: " . $self->{Distro} . "\n";
-    $str .= "\tChRoot: " . $self->{ChRoot} . "\n";
+    $str .= "\tChRoot: " . $self->{ChRoot} . "\n" if defined $self->{ChRoot};
     my $repo_ref = $self->{Repos};
-    $str .= "\tNumber of repos: " . scalar (@$repo_ref) . "\n";
+    $str .= "\tNumber of repos: " . scalar (@$repo_ref) . "\n" 
+        if defined $repo_ref;
     $str .= "\tList of repos: ". join(", ", @$repo_ref) . "\n"
-        if scalar (@$repo_ref) > 0;
+        if (defined $repo_ref && scalar (@$repo_ref) > 0);
     return $str;
 }
 
@@ -1140,10 +1141,6 @@ is quickly complex (especially when ptty_try is used). However, since Packman
 already monitor commands output, we monitor those message in order to catch any
 error messages. Typically, all messages starting by "ERROR" are concidered as
 error messages and handled as an exception by PackMan.
-
-=head1 SEE ALSO
-
-  DepMan
 
 =head1 AUTHOR
 
