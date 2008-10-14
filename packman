@@ -29,6 +29,7 @@ my $verbose = 1;
 
 Getopt::Long::Configure("pass_through");
 GetOptions(
+        "distro=s"                      => \$distro,
         "prepare-repo=s"                => \$prepare_repo,
         "root=s"                        => \$root,
         "verbose"                       => \$verbose,
@@ -69,7 +70,26 @@ if ( $ARGV[0] ne "install" ) {
     print "(in $root) " if defined $root;
     OSCAR::Utils::print_array (@pkgs);
 
-    my $pm = PackMan::DEB->new;
+    # Based on the distro id we detect the underneath binary package format
+    # (remember that PackMan cannot abstract that format).
+    require OSCAR::PackagePath;
+    my ($dist, $ver, $arch) 
+        = OSCAR::PackagePath::decompose_distro_id ($distro);
+    my $os = OSCAR::OCA::OS_Detect::open (fake=>{ distro=>$dist,
+                                                  distro_version=>$ver,
+                                                  arch=>$arch});
+    die "ERROR: Impossible to decompose the distro ID" if (!defined $os);
+    print "[PackMan] Binary package format: ". $os->{pkg} ."\n" if $verbose;
+    require OSCAR::PackMan;
+    my $pm;
+    if ($os->{pkg} eq "deb") {
+        $pm = PackMan::DEB->new;
+    } elsif ($os->{pkg} eq "rpm") {
+        $pm = PackMan::RPM->new;
+    } else {
+        die "ERROR: Unknown binary package format (".$os->{pkg}.")";
+    }
+    
     if (!defined $pm) {
         die "ERROR: Impossible to create a PackMan object";
     }
@@ -89,7 +109,7 @@ if ( $ARGV[0] ne "install" ) {
 }
 
 sub help () {
-    print "Help: Not yet implemented\n";
+    print "Please execute \"man packman\"\n";
 }
 
 sub help_and_die {
@@ -113,25 +133,39 @@ __END__
 
 packman, a command line tool for the PackMan Perl module.
 
-=head1 SYNOPSIS
-
-packman OPTIONS
-
 =head1 DESCRIPTION
 
-???
+The packman script is a simple command line interface (CLI) for the PackMan
+Perl module. Therefore, this script allows one to manipulate binary packages
+transparently, the underneath binary package format being abstracted.
 
 =head1 SYNTAX
 
-packman [--prepare-repo]
+packman [OPTIONS] COMMANDS
 
 =head1 OPTIONS
 
 Recognized options include:
 
-=over 1
+=over 8
 
-=item --prepare-repo
+=item --distro
+
+Specify the Linux distribution that should be used to perform the commands. 
+Typically this parameter will allow PackMan to identify the OSCAR repositories
+that must be used for the command execution.
+
+=item --prepare-repo <repo_path>
+
+Prepare a local repository of binary packages (repository available at "repo_path").
+
+=item --root
+
+Specify the root where the commands should be executed (a chroot is typically used).
+
+=item --verbose | --v
+
+Enable the verbose mode (usefull for debugging).
 
 =item --help
 
@@ -141,8 +175,17 @@ Help information.
 
 =head1 Examples
 
-=head2 Install the dpkg package into the image stored in /tmp/test
-    sudo packman --root /tmp/test/ --distro ubuntu-7-i386 install dpkg
+=over 8
+
+=item Package installation:
+
+Install the dpkg package into the image stored in /tmp/test:
+
+sudo packman --root /tmp/test/ --distro ubuntu-7-i386 install dpkg 
+
+Note that if the image does not already exists, the image will be bootstrapped.
+
+=back
 
 =head1 AUTHOR
 
@@ -150,6 +193,6 @@ Geoffroy Vallee, Oak Ridge National Laboratory <valleegr at ornl dot gov>
 
 =head1 SEE ALSO
 
-perl(1)
+perl(1), perldoc OSCAR::PackMan, perldoc OSCAR::PackMan::DEB, perldoc OSCAR::PackMan::RPM
 
 =cut
