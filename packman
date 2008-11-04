@@ -37,6 +37,21 @@ GetOptions(
         "help"                          => \&help_and_exit,
         ) || help_and_die();
 
+# Validate the packman command requested by the user.
+#
+# Input: cmd, the command that the user wants to execute.
+# Return: 1 if the command is valid, 0 else.
+sub command_is_valid ($) {
+    my $cmd = shift;
+
+    if ( OSCAR::Utils::is_a_valid_string ($cmd) && (($cmd eq "install")
+        || ($cmd eq "remove") || ($cmd eq "search") || ($cmd eq "show"))) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 if ($prepare_repo && defined $ARGV[0]) {
     die "ERROR: it seems you try to do multiple actions at the same time, ".
         "this is not allowed.";
@@ -53,22 +68,13 @@ if ($prepare_repo) {
     exit 0;
 }
 
-if ( $ARGV[0] ne "install" ) {
+my $cmd = $ARGV[0];
+if ( command_is_valid ($cmd) == 0 ) {
     die "ERROR: you try to execute an unsupported command $ARGV[0]";
 } else {
-    if (!defined $distro) {
+    if (!OSCAR::Utils::is_a_valid_string ($distro)) {
         die "ERROR: You must specify which distro to use to manage packages";
     }
-
-    my @pkgs;
-    my $pos = 1;
-    foreach my $p (1 .. $#ARGV ) {
-        push (@pkgs, $ARGV[$p]);
-        $pos++;
-    }
-    print "INFO: installing the following packages for $distro ";
-    print "(in $root) " if defined $root;
-    OSCAR::Utils::print_array (@pkgs);
 
     # Based on the distro id we detect the underneath binary package format
     # (remember that PackMan cannot abstract that format).
@@ -102,8 +108,45 @@ if ( $ARGV[0] ne "install" ) {
             die "ERROR: Impossible to specify the root of the PackMan object";
         }
     }
-    if ($pm->smart_install(@pkgs) == 0) {
-        die "ERROR: Impossible to install ". join (", ", @pkgs);
+
+    #
+    # For most of the commands, the argument is a list of packages. So, we
+    # parse the arguments/
+    #
+    my @pkgs;
+    my $pattern;
+    if ($cmd ne "search") {
+        my $pos = 1;
+        foreach my $p (1 .. $#ARGV ) {
+            push (@pkgs, $ARGV[$p]);
+            $pos++;
+        }
+        OSCAR::Utils::print_array (@pkgs);
+    } else {
+        $pattern = $ARGV[1]
+    }
+    print "INFO: Executing commands based on the distro $distro ";
+    print "(in $root) " if defined $root;
+    if ($cmd eq "install") {
+        if ($pm->smart_install(@pkgs) == 0) {
+            die "ERROR: Impossible to install " . join (", ", @pkgs);
+        }
+    } elsif ($cmd eq "remove") {
+        if ($pm->remove(@pkgs) == 0) {
+            die "ERROR: Impossible to remove " . join (", ", @pkgs);
+        }
+    } elsif ($cmd eq "search") {
+        if ($pm->search_repos(join (" ", @pkgs)) == 0) {
+            die "ERROR: Impossible to search for packages " 
+                . join (", ", @pkgs);
+        }
+    } elsif ($cmd eq "show") {
+        if ($pm->show_repos($pattern) == 0) {
+            die "ERROR: Impossible to show details of packages "
+                . join (", ", @pkgs);
+        }
+    } else {
+        die "ERROR: Unsupported command ($cmd)";
     }
     exit 0;
 }

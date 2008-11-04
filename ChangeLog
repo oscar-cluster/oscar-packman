@@ -1,5 +1,6 @@
 packman-3.1.2 (not yet released):
-* Finalize the packman script.
+* Improve the packman script: make the script more stable, add the support of
+the remove, search and show commands.
 * Clean up the man page and the different Perl docs.
 
 packman-3.1.1:

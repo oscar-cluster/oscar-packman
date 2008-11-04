@@ -742,6 +742,10 @@ sub search_repo ($$) {
     return ($rc, @opkgs);
 }
 
+sub rpm_pkg_data_to_hash ($@) {
+    carp "Not yet implemented";
+}
+
 sub deb_pkg_data_to_hash ($@) {
     my ($self, @output) = @_;
     my ($ver, $rel, $summary, $packager, $desc, $class, $name, $group,

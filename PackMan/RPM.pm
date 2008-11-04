@@ -186,6 +186,16 @@ sub gencache_command_line {
     1,'yume #repos --prepare'
 }
 
+# How to search packages in a repository
+sub search_repo_command_line {
+    1,'yume #repos #chroot search #args'
+}
+
+# How to show packages details in a repository
+sub show_repo_command_line {
+    1, 'yume #repos #chroot info #args'
+}
+
 1;
 __END__
 =head1 NAME
