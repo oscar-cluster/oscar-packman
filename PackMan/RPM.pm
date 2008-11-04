@@ -156,6 +156,11 @@ sub repo_arg_command_line {
     '--repo #repo'
 }
 
+# How rapt handles the specification of a distro
+sub distro_arg_command_line {
+    '--distro #distro'
+}
+
 # How yume installs packages
 sub smart_install_command_line {
     1,'yume #repos -y #chroot install #args'
