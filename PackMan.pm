@@ -211,8 +211,19 @@ sub distro {
     ref (my $self = shift) or croak "distro is an instance method";
     if (@_) {
         my $distro = shift;
-        # TODO: We should validate the distro ID here.
+        require OSCAR::PackagePath;
+        require OSCAR::OCA::OS_Detect;
         $self->{Distro} = $distro;
+        my ($dist, $ver, $arch)
+            = OSCAR::PackagePath::decompose_distro_id ($distro);
+        my $os = OSCAR::OCA::OS_Detect::open (fake=>
+            {distro=>$dist, version=>$ver, arch=>$arch});
+        my $drepo = OSCAR::PackagePath::distro_repo_url(os=>$os);
+        my $orepo = OSCAR::PackagePath::oscar_repo_url(os=>$os);
+        my @repos;
+        unshift (@repos, $drepo);
+        unshift (@repos, $orepo);
+        $self->{Repos} = \@repos;
         return 1;
     } else {
         return 0;

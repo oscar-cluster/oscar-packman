@@ -25,7 +25,7 @@ use Getopt::Long;
 use Data::Dumper;
 
 my ($prepare_repo, $root, $distro);
-my $verbose = 1;
+my $verbose;
 
 Getopt::Long::Configure("pass_through");
 GetOptions(
@@ -121,12 +121,18 @@ if ( command_is_valid ($cmd) == 0 ) {
             push (@pkgs, $ARGV[$p]);
             $pos++;
         }
+        if (scalar (@pkgs) == 0) {
+            print "[INFO] No packages to look for\n" if $verbose;
+            exit 0;
+        }
         OSCAR::Utils::print_array (@pkgs);
     } else {
         $pattern = $ARGV[1]
     }
-    print "INFO: Executing commands based on the distro $distro ";
-    print "(in $root) " if defined $root;
+    print "INFO: Executing commands based on the distro $distro " if $verbose;
+    print "(in $root) " if ($verbose && defined $root);
+    print "\n" if $verbose;
+    my ($rc, @output);
     if ($cmd eq "install") {
         if ($pm->smart_install(@pkgs) == 0) {
             die "ERROR: Impossible to install " . join (", ", @pkgs);
@@ -136,14 +142,21 @@ if ( command_is_valid ($cmd) == 0 ) {
             die "ERROR: Impossible to remove " . join (", ", @pkgs);
         }
     } elsif ($cmd eq "search") {
-        if ($pm->search_repos(join (" ", @pkgs)) == 0) {
-            die "ERROR: Impossible to search for packages " 
-                . join (", ", @pkgs);
+        ($rc, @output) = $pm->search_repo($pattern);
+        if ($rc != 0) {
+            die "ERROR: Impossible to search for packages ($rc, $pattern, \n" .
+                join ("\n", @output) . ")";
+        } else {
+            print (join ("\n", @output));
         }
     } elsif ($cmd eq "show") {
-        if ($pm->show_repos($pattern) == 0) {
+        my %data;
+        ($rc, %data) = $pm->show_repo(@pkgs);
+        if ($rc != 0) {
             die "ERROR: Impossible to show details of packages "
                 . join (", ", @pkgs);
+        } else {
+            print Dumper %data;
         }
     } else {
         die "ERROR: Unsupported command ($cmd)";
