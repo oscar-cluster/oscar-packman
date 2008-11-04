@@ -17,6 +17,7 @@ use Data::Dumper;
 use POSIX;
 
 use OSCAR::PackManDefs;
+use OSCAR::OCA::OS_Detect;
 
 our $VERSION;
 $VERSION = "r" . q$Rev$ =~ /(\d+)/;
@@ -212,12 +213,16 @@ sub distro {
     if (@_) {
         my $distro = shift;
         require OSCAR::PackagePath;
-        require OSCAR::OCA::OS_Detect;
         $self->{Distro} = $distro;
         my ($dist, $ver, $arch)
             = OSCAR::PackagePath::decompose_distro_id ($distro);
-        my $os = OSCAR::OCA::OS_Detect::open (fake=>
-            {distro=>$dist, version=>$ver, arch=>$arch});
+        my $os = OSCAR::OCA::OS_Detect::open (fake=>{distro=>$dist,
+                                                     distro_version=>$ver,
+                                                     arch=>$arch});
+        if (!defined $os) {
+            carp "ERROR: Cannot recognized the OS";
+            return 0;
+        }
         my $drepo = OSCAR::PackagePath::distro_repo_url(os=>$os);
         my $orepo = OSCAR::PackagePath::oscar_repo_url(os=>$os);
         my @repos;
