@@ -727,16 +727,19 @@ sub check_installed {
     return @really_failed;
 }
 
-#
-# Search repository for packages matching the passed pattern
-#
-# Usage:
-#    ($err, @list) = $pm->search_repo("pattern");
-sub search_repo ($$) {
+################################################################################
+# This function parses the result of the search command from rapt. Except some #
+# cleanup up (some lines are empty), this is fairly simple.                    #
+#                                                                              #
+# Input: opkgs, array with OPKGs name and some stuff to clean up, the actual   #
+#               result of the rapt command.                                    #
+# Output: an array of OPKGs names.                                             #
+################################################################################
+sub parse_deb_search_result ($@) {
     ref (my $self = shift)
-        or return (ERROR, "search_repo is an instance method");
-    my $pattern = shift;
-    my ($rc, @opkgs) = $self->do_simple_command ('search_repo', $pattern);
+        or return (ERROR, "parse_deb_search_result is an instance method");
+    my @opkgs = @_;
+
     for (my $i=0; $i<scalar(@opkgs); $i++) {
         # We do some cleaning
         if (!defined $opkgs[$i]) {
@@ -754,6 +757,62 @@ sub search_repo ($$) {
             # array
             $i--;
         }
+    }
+    return @opkgs;
+}
+
+################################################################################
+# This functions parses the result of the yume command to search for packages  #
+# and extract OPKGs' names. The typical output is:                             #
+#   perl-String-CRC32.i386                   1.4-2.fc6              os_i386    #
+#   Matched from:                                                              #
+#   perl-String-CRC32                                                          #
+#   http://search.cpan.org/dist/String-CRC32/                                  #
+# and we only want to get "perl-String-CRC32".                                 #
+#                                                                              #
+# Input: output, an array, result of the yume command, with the yume's output; #
+#                each line is in a separate element of the array.              #
+# Result: an array of OPKGs names.                                             #
+################################################################################
+sub parse_rpm_search_result ($@) {
+    ref (my $self = shift)
+        or return (ERROR, "parse_deb_search_result is an instance method");
+    my @output = @_;
+    my @opkgs;
+
+    for (my $i=0; $i<scalar(@output); $i++) {
+        # The name of the package is at the beginning of the line previous to
+        # the "Matched from:" line. The name is also the substring just before
+        # the first ".", e.g., "perl-String-CRC32.i386    1.4-2.fc6   os_i386"
+        if ($output[$i] =~ /^Matched from:/) {
+            my ($opkg, $trash) = split (".", $output[$i-1]);
+            push (@opkgs, $opkg);
+        }
+    }
+    return @opkgs;
+}
+
+################################################################################
+# Search repository for packages matching the passed pattern.                  #
+#                                                                              #
+# Usage:                                                                       #
+#    ($err, @list) = $pm->search_repo("pattern");                              #
+# Input: pattern, the pattern to look for.                                     #
+# Result: err, the error return code.                                          #
+#         list, array with the name of OPKGs.                                  #
+################################################################################
+sub search_repo ($$) {
+    ref (my $self = shift)
+        or return (ERROR, "search_repo is an instance method");
+    my $pattern = shift;
+    my ($rc, @output) = $self->do_simple_command ('search_repo', $pattern);
+    my @opkgs;
+    if ($self->{Format} eq "DEB") {
+        @opkgs = $self->parse_deb_search_result (@output);
+    } elsif ($self->{Format} eq "RPM") {
+        @opkgs = $self->parse_rpm_search_result (@output);
+    } else {
+        return (ERROR, "**search_repo** unknown format (".$self->{Format}.")");
     }
     return ($rc, @opkgs);
 }
