@@ -783,8 +783,8 @@ sub parse_rpm_search_result ($@) {
         # The name of the package is at the beginning of the line previous to
         # the "Matched from:" line. The name is also the substring just before
         # the first ".", e.g., "perl-String-CRC32.i386    1.4-2.fc6   os_i386"
-        if (OSCAR::Utils::is_a_valid_string($output[$i]) &&
-		($output[$i] =~ /^Matched from:/)) {
+        if (OSCAR::Utils::is_a_valid_string($output[$i]) 
+            && ($output[$i] =~ /^Matched from:/)) {
             my (@tokens) = split (/\./, $output[$i-1]);
             push (@opkgs, $tokens[0]) if (OSCAR::Utils::is_a_valid_string ($tokens[0]));
         }
@@ -817,10 +817,83 @@ sub search_repo ($$) {
     return ($rc, @opkgs);
 }
 
-sub rpm_pkg_data_to_hash ($@) {
-    carp "Not yet implemented";
+################################################################################
+# Function that helps at parsing the output of the yume command that gets      #
+# details about a given package and create accordingly a hash with all package #
+# data. This function typically find the position of the next package          #
+# description.                                                                 #
+#                                                                              #
+# Input: pos, position of the current package description.                     #
+#        output, yume command output that describes OPKG(s).                   #
+# Output: position of the next package description, -1 is no other package     #
+#         description.                                                         #
+################################################################################
+sub find_next_rpm_pkg ($$@) {
+    ref (my $self = shift) 
+        or return (ERROR, "show_repo is an instance method");
+    my ($pos, @output) = @_;
+
+    for (my $i = $pos; $i < scalar (@output); $i++) {
+        return ($i-1) if ($output[$i] =~ /^Matched from:/);
+    }
+    return -1;
 }
 
+################################################################################
+# This function takes the output of the yume command to get package details,   #
+# parses it and format it into a hash PackMan and everything on top of PackMan #
+# will understand (format independent to the underlying binary package format  #
+# tool).                                                                       #
+#                                                                              #
+# Input: output, the output of the Yume command: one line per array element.   #
+# Return: a hash that fits the OSCAR description of a package.                 #
+################################################################################
+sub rpm_pkg_data_to_hash ($@) {
+    ref (my $self = shift) 
+        or return (ERROR, "rpm_pkg_data_to_hash is an instance method");
+    my @output = @_;
+    my ($ver, $rel, $summary, $packager, $desc, $class, $name, $group,
+        $conflicts, $isdesc, $dist);
+    my %o;
+
+    for (my $i=0; $i < scalar (@output); $i++) {
+        if (OSCAR::Utils::is_a_valid_string($output[$i]) 
+            && ($output[$i] =~ /^Matched from:/)) {
+            my (@tokens) = split (/\./, $output[$i-1]);
+            $name = $tokens[0];
+            $ver = $tokens[2];
+            my $pos = self->find_next_rpm_pkg ($i, @output);
+            $pos = scalar (@output) if ($pos != -1);
+            foreach (my $j = $i; $j < $pos; $j++) {
+                $desc .= $output[$j];
+            }
+        }
+    }
+    if ($name) {
+        $o{$name} = {
+            package => $name,
+            version => $ver,
+            summary => $summary,
+            packager => $packager,
+            description => $desc,
+            class => $class,
+            group => $group,
+            distro => $dist,
+            conflicts => $conflicts,
+        };
+    }
+    return %o;
+}
+
+################################################################################
+# This function takes the output of the rapt show command, parses it and       #
+# format it into a hash PackMan and everything on top of PackMan will          #
+# understand (format independent to the underlying binary package format       #
+# tool).                                                                       #
+#                                                                              #
+# Input: output, the output of the RAPT command: one line per array element.   #
+# Return: a hash that fits the OSCAR description of a package.                 #
+################################################################################
 sub deb_pkg_data_to_hash ($@) {
     my ($self, @output) = @_;
     my ($ver, $rel, $summary, $packager, $desc, $class, $name, $group,
