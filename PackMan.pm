@@ -328,7 +328,6 @@ sub command_helper {
                   . " module doesn't implement method "
                   . "distro_arg_command_line";
 
-        print STDERR "[PackMan] ---> $cl\n";
         if ($cl =~ m/#distro/) {
             my $tmp = $self->distro_arg_command_line;
             my $d = $self->{Distro};
@@ -784,9 +783,10 @@ sub parse_rpm_search_result ($@) {
         # The name of the package is at the beginning of the line previous to
         # the "Matched from:" line. The name is also the substring just before
         # the first ".", e.g., "perl-String-CRC32.i386    1.4-2.fc6   os_i386"
-        if ($output[$i] =~ /^Matched from:/) {
-            my ($opkg, $trash) = split (".", $output[$i-1]);
-            push (@opkgs, $opkg);
+        if (OSCAR::Utils::is_a_valid_string($output[$i]) &&
+		($output[$i] =~ /^Matched from:/)) {
+            my (@tokens) = split (/\./, $output[$i-1]);
+            push (@opkgs, $tokens[0]) if (OSCAR::Utils::is_a_valid_string ($tokens[0]));
         }
     }
     return @opkgs;
