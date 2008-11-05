@@ -856,21 +856,32 @@ sub rpm_pkg_data_to_hash ($@) {
         $conflicts, $isdesc, $dist);
     my %o;
 
+    OSCAR::Utils::print_array (@output);
+    my @tokens;
+
     for (my $i=0; $i < scalar (@output); $i++) {
-        if (OSCAR::Utils::is_a_valid_string($output[$i]) 
-            && ($output[$i] =~ /^Matched from:/)) {
-            my (@tokens) = split (/\./, $output[$i-1]);
-            $name = $tokens[0];
-            $ver = $tokens[2];
-            my $pos = self->find_next_rpm_pkg ($i, @output);
-            $pos = scalar (@output) if ($pos != -1);
-            foreach (my $j = $i; $j < $pos; $j++) {
-                $desc .= $output[$j];
+        if (OSCAR::Utils::is_a_valid_string($output[$i]) == 1) {
+            @tokens = split (/:/, $output[$i]);
+            print STDERR "Token ID: ". $tokens[0].".\n";
+            if (OSCAR::Utils::trim ($tokens[0]) eq "Name") {
+                $name = OSCAR::Utils::trim ($tokens[1]);
+            } 
+            if (OSCAR::Utils::trim ($tokens[0]) eq "Version") {
+		$ver = OSCAR::Utils::trim ($tokens[1]);
+            } 
+            if (OSCAR::Utils::trim ($tokens[0]) eq "Release") {
+		$ver .= OSCAR::Utils::trim ($tokens[1]);
+            } 
+            if (OSCAR::Utils::trim ($tokens[0]) eq "Summary") {
+                $summary = OSCAR::Utils::trim ($tokens[1]);
+            }
+            if (OSCAR::Utils::trim ($tokens[0]) eq "Description") {
+                $desc = OSCAR::Utils::trim ($output[$i+1]);
+                $i++;
             }
         }
-    }
-    if ($name) {
-        $o{$name} = {
+    	if ($name) {
+        	$o{$name} = {
             package => $name,
             version => $ver,
             summary => $summary,
@@ -878,9 +889,10 @@ sub rpm_pkg_data_to_hash ($@) {
             description => $desc,
             class => $class,
             group => $group,
-            distro => $dist,
+            distro => $self->{Distro},
             conflicts => $conflicts,
-        };
+        	};
+	}
     }
     return %o;
 }
