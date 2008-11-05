@@ -18,7 +18,7 @@ Group:     		Development/Libraries
 Source:			%{name}.tar.gz
 BuildRoot: 		%{_localstatedir}/%{name}-root
 BuildArch:		noarch
-Requires:       oscar-base-libs, yume >=2.8.1
+Requires:       oscar-base-libs, yume >= 2.8.1
 AutoReq :       yes
 Provides:       perl(OSCAR::PackManDefs)
 
