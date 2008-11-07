@@ -2,7 +2,7 @@ packman (3.1.2-1) hardy; urgency=low
 
   * New upstream version.
 
- -- Geoffroy Vallee [gvh] <gvh@gvh1.ornl.gov>  Fri, 07 Nov 2008 11:56:45 -0500
+ -- Geoffroy Vallee <valleegr@ornl.gov>  Fri, 07 Nov 2008 11:56:45 -0500
 
 packman (3.1.1-1) gutsy; urgency=low
 
