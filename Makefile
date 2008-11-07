@@ -24,6 +24,7 @@ deb ::
 	dpkg-buildpackage -rfakeroot
 
 clean:
+	rm -f *~
 	rm -f packman.3.gz 
 	rm -f build-stamp configure-stamp
 	rm -rf debian/files debian/packman
