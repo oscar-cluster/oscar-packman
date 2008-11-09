@@ -569,7 +569,7 @@ sub smart_install ($@) {
     ref (my $self = shift) 
         or return (ERROR, "smart_install is an instance method");
     if ((scalar @_) == 0) {
-        return (SUCCESS, "");
+        return (SUCCESS, "smart_install successful");
     }
     return ($self->do_simple_command ('smart_install', @_));
 }
