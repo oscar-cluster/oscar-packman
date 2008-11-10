@@ -594,7 +594,6 @@ sub smart_install ($@) {
         }
         my $compat_distro = "$os->{compat_distro}-$ver-$arch";
         $filerpmlist .= "$compat_distro.rpmlist";
-        print STDERR "File: $filerpmlist\n";
         open(DAT, $filerpmlist)
             || (return(ERROR, "ERROR: Could not open file $filerpmlist"));
         my ($err, @output, $line);
@@ -602,16 +601,14 @@ sub smart_install ($@) {
             next if (!OSCAR::Utils::is_a_valid_string ($line));
             $line = OSCAR::Utils::trim ($line);
             next if ($line =~ /^#/);
-#             push (@pkgs, $line);
-#             ($err, @output) = $self->do_simple_command ('smart_install',
-#                               $line);
-#             if ($err == ERROR) {
-#                 print STDERR "Impossible to install $line\n";
-#             }
-#             print STDERR "Installing .$line.\n";
+            push (@pkgs, $line);
+            ($err, @output) = $self->do_simple_command ('smart_install',
+                              $line);
+#            if ($err == ERROR) {
+#                print STDERR "Impossible to install $line\n";
+#            }
         }
         close (DAT);
-#         print STDERR "Package to install " . OSCAR::Utils::print_array(@pkgs) . "\n";
     }
     return ($self->do_simple_command ('smart_install', @pkgs));
 }
