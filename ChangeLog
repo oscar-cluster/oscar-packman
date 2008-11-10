@@ -1,4 +1,8 @@
-packman-3.1.2 (not yet released):
+packman-3.1.3 (not yet released):
+* Implement the image bootstrapping for RPM based systems.
+* Better error handling.
+
+packman-3.1.2:
 * Improve the packman script: make the script more stable, add the support of
 the remove, search and show commands.
 * Clean up the man page and the different Perl docs.

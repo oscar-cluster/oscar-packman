@@ -567,11 +567,53 @@ sub update ($@) {
 #           command.
 sub smart_install ($@) {
     ref (my $self = shift) 
-        or return (ERROR, "smart_install is an instance method");
-    if ((scalar @_) == 0) {
+        or return (ERROR, "ERROR: smart_install is an instance method");
+    my @pkgs = @_;
+    if ((scalar @pkgs) == 0) {
         return (SUCCESS, "smart_install successful");
     }
-    return ($self->do_simple_command ('smart_install', @_));
+    # If the image does not exist for a given RPM based image, we need to
+    # bootstrap the image. For Debian system, RAPT deals with it.
+    if (defined ($self->{Distro}) && $self->{Format} eq "RPM"
+        && defined ($self->{ChRoot}) && (! -d $self->{ChRoot})) {
+        # We need first the list of packages for a basic image
+        my $filerpmlist;
+        if (defined $ENV{OSCAR_HOME}) {
+            $filerpmlist = "$ENV{OSCAR_HOME}/oscarsamples/";
+        } else {
+            $filerpmlist = "/usr/share/oscar/oscarsamples/";
+        }
+        my ($dist, $ver, $arch)
+            = OSCAR::PackagePath::decompose_distro_id ($self->{Distro});
+        my $os = OSCAR::OCA::OS_Detect::open (fake=>{ distro=>$dist,
+                                                  distro_version=>$ver,
+                                                  arch=>$arch});
+        if (!defined ($os)) {
+            return (ERROR, "ERROR: Impossible to detect the distro ".
+                           "($self->{Distro})");
+        }
+        my $compat_distro = "$os->{compat_distro}-$ver-$arch";
+        $filerpmlist .= "$compat_distro.rpmlist";
+        print STDERR "File: $filerpmlist\n";
+        open(DAT, $filerpmlist)
+            || (return(ERROR, "ERROR: Could not open file $filerpmlist"));
+        my ($err, @output, $line);
+        while ($line = <DAT>) {
+            next if (!OSCAR::Utils::is_a_valid_string ($line));
+            $line = OSCAR::Utils::trim ($line);
+            next if ($line =~ /^#/);
+#             push (@pkgs, $line);
+#             ($err, @output) = $self->do_simple_command ('smart_install',
+#                               $line);
+#             if ($err == ERROR) {
+#                 print STDERR "Impossible to install $line\n";
+#             }
+#             print STDERR "Installing .$line.\n";
+        }
+        close (DAT);
+#         print STDERR "Package to install " . OSCAR::Utils::print_array(@pkgs) . "\n";
+    }
+    return ($self->do_simple_command ('smart_install', @pkgs));
 }
 
 # Command the smart package manager to remove each of the package files
@@ -583,7 +625,7 @@ sub smart_install ($@) {
 #           command.
 sub smart_remove {
     ref (my $self = shift) 
-        or return (ERROR, "smart_remove is an instance method");
+        or return (ERROR, "ERROR: smart_remove is an instance method");
     if ((scalar @_) == 0) {
         return (SUCCESS, "");
     }
@@ -598,14 +640,14 @@ sub smart_remove {
 # $out_ref is a reference to an array containing the output of the command.
 sub smart_update {
     ref (my $self = shift) 
-        or return (ERROR, "smart_update is an instance method");
+        or return (ERROR, "ERROR: smart_update is an instance method");
     return ($self->do_simple_command ('smart_update', @_));
 }
 
 # Clean all smart package manager caches
 sub clean {
     ref (my $self = shift) 
-        or return (ERROR, "clean is an instance method");
+        or return (ERROR, "ERROR: clean is an instance method");
     return ($self->do_clean);
 }
 

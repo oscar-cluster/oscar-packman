@@ -21,6 +21,7 @@ use strict;
 use warnings "all";
 use Carp;
 use OSCAR::PackageSmart;
+use OSCAR::PackManDefs;
 use Getopt::Long;
 use Data::Dumper;
 
@@ -134,11 +135,14 @@ if ( command_is_valid ($cmd) == 0 ) {
     print "\n" if $verbose;
     my ($rc, @output);
     if ($cmd eq "install") {
-        if ($pm->smart_install(@pkgs) == 0) {
-            die "ERROR: Impossible to install " . join (", ", @pkgs);
+        ($rc, @output) = $pm->smart_install(@pkgs);
+        if ($rc == ERROR) {
+            die "ERROR: Impossible to install " . join (", ", @pkgs) . " ("
+                . join ("\n", @output) . ")";
         }
     } elsif ($cmd eq "remove") {
-        if ($pm->remove(@pkgs) == 0) {
+        ($rc, @output) = $pm->remove(@pkgs);
+        if ($rc == ERROR) {
             die "ERROR: Impossible to remove " . join (", ", @pkgs);
         }
     } elsif ($cmd eq "search") {
