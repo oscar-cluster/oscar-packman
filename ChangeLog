@@ -1,6 +1,8 @@
 packman-3.1.3 (not yet released):
 * Implement the image bootstrapping for RPM based systems.
 * Better error handling.
+* Include a "rpm" target to the Makefile; it is not possible to execute "make
+rpm".
 
 packman-3.1.2:
 * Improve the packman script: make the script more stable, add the support of
@@ -13,7 +15,8 @@ packman-3.1.1:
 them outside of PackMan without warnings or errors.
 
 packman-3.1.0:
-* Enable to specification of a distro ID (OS_Detect syntax) to a PackMan object.
+* Enable to specification of a distro ID (OS_Detect syntax) to a PackMan 
+object.
 * Finalize the support of "show" and "search" commands.
 * Store the concrete module format used in the backend (DEB vs. RPM).
 * Extend the packman script to support package installation.

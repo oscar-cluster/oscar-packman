@@ -23,6 +23,10 @@ install: all
 deb ::
 	dpkg-buildpackage -rfakeroot
 
+rpm: dist
+	cp packman.tar.gz /usr/src/redhat/SOURCES
+	rpmbuild -bb ./packman.spec
+
 clean:
 	rm -f *~
 	rm -f packman.3.gz 
