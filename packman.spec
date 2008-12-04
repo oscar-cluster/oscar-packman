@@ -9,7 +9,7 @@
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman
 Version:   		3.1.2
-Release:   		4
+Release:   		5
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:		OSCAR
 Packager:		Erich Focht <efocht@hpce.nec.com>
@@ -52,6 +52,8 @@ make install DESTDIR=$RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Dec 04 2008 Geoffroy Vallee <valleegr@ornl.gov> 3.1.2-5
+- Move the libraries into a noarch directory.
 * Fri Nov 28 2008 Geoffroy Vallee <valleegr@ornl.gov> 3.1.2-4
 - Disable automatic dependencies.
 * Fri Nov 28 2008 Geoffroy Vallee <valleegr@ornl.gov> 3.1.2-3
