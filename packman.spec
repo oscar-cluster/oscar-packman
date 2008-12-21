@@ -8,8 +8,8 @@
 
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman
-Version:   		3.1.2
-Release:   		5
+Version:   		3.1.3
+Release:   		1
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:		OSCAR
 Packager:		Erich Focht <efocht@hpce.nec.com>
@@ -18,7 +18,7 @@ Group:     		Development/Libraries
 Source:			%{name}.tar.gz
 BuildRoot: 		%{_localstatedir}/%{name}-root
 BuildArch:		noarch
-Requires:       	oscar-base-lib, yume >= 2.8.1
+Requires:       	oscar-base-lib, yume >= 2.8.2
 AutoReq :       	yes
 Provides:       	perl(OSCAR::PackManDefs)
 AutoReqProv: 		no
