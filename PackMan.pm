@@ -220,7 +220,7 @@ sub distro {
                                                      distro_version=>$ver,
                                                      arch=>$arch});
         if (!defined $os) {
-            carp "ERROR: Cannot recognized the OS";
+            carp "ERROR: Cannot recognized the OS ($distro)";
             return 0;
         }
         my $drepo = OSCAR::PackagePath::distro_repo_url(os=>$os);
@@ -802,11 +802,8 @@ sub parse_deb_search_result ($@) {
 ################################################################################
 # This functions parses the result of the yume command to search for packages  #
 # and extract OPKGs' names. The typical output is:                             #
-#   perl-String-CRC32.i386                   1.4-2.fc6              os_i386    #
-#   Matched from:                                                              #
-#   perl-String-CRC32                                                          #
-#   http://search.cpan.org/dist/String-CRC32/                                  #
-# and we only want to get "perl-String-CRC32".                                 #
+#     opkg-linux-ha-server-0:2.0.8-2.noarch                                    #
+# and we only want to get "opkg-linux-ha-server".                              #
 #                                                                              #
 # Input: output, an array, result of the yume command, with the yume's output; #
 #                each line is in a separate element of the array.              #
@@ -819,13 +816,9 @@ sub parse_rpm_search_result ($@) {
     my @opkgs;
 
     for (my $i=0; $i<scalar(@output); $i++) {
-        # The name of the package is at the beginning of the line previous to
-        # the "Matched from:" line. The name is also the substring just before
-        # the first ".", e.g., "perl-String-CRC32.i386    1.4-2.fc6   os_i386"
-        if (OSCAR::Utils::is_a_valid_string($output[$i]) 
-            && ($output[$i] =~ /^Matched from:/)) {
-            my (@tokens) = split (/\./, $output[$i-1]);
-            push (@opkgs, $tokens[0]) if (OSCAR::Utils::is_a_valid_string ($tokens[0]));
+	if (OSCAR::Utils::is_a_valid_string($output[$i])
+            && ($output[$i] =~ /^(.*)-[0-9]:(.*)$/)) {
+            push (@opkgs, $1);
         }
     }
     return @opkgs;
@@ -844,11 +837,13 @@ sub search_repo ($$) {
     ref (my $self = shift)
         or return (ERROR, "search_repo is an instance method");
     my $pattern = shift;
-    my ($rc, @output) = $self->do_simple_command ('search_repo', $pattern);
+    my ($rc, @output);
     my @opkgs;
     if ($self->{Format} eq "DEB") {
+        ($rc, @output) = $self->do_simple_command ('search_repo', $pattern);
         @opkgs = $self->parse_deb_search_result (@output);
     } elsif ($self->{Format} eq "RPM") {
+        ($rc, @output) = $self->do_simple_command ('search_repo_update', $pattern);
         @opkgs = $self->parse_rpm_search_result (@output);
     } else {
         return (ERROR, "**search_repo** unknown format (".$self->{Format}.")");
@@ -901,7 +896,7 @@ sub rpm_pkg_data_to_hash ($@) {
     for (my $i=0; $i < scalar (@output); $i++) {
         if (OSCAR::Utils::is_a_valid_string($output[$i]) == 1) {
             @tokens = split (/:/, $output[$i]);
-            print STDERR "Token ID: ". $tokens[0].".\n";
+#            print STDERR "Token ID: ". $tokens[0].".\n";
             if (OSCAR::Utils::trim ($tokens[0]) eq "Name") {
                 $name = OSCAR::Utils::trim ($tokens[1]);
             } 
