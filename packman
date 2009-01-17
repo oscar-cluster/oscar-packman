@@ -53,6 +53,8 @@ sub command_is_valid ($) {
     }
 }
 
+$ENV{PACKMAN_VERBOSE} = 1 if ($verbose);
+
 if ($prepare_repo && defined $ARGV[0]) {
     die "ERROR: it seems you try to do multiple actions at the same time, ".
         "this is not allowed.";
@@ -103,7 +105,7 @@ if ( command_is_valid ($cmd) == 0 ) {
     if ($pm->distro($distro) == 0) {
         die "ERROR: Impossible to specify the distro of the PackMan object";
     }
-    print $pm->status;
+    print $pm->status if $verbose;
     if (defined $root) {
         if ($pm->chroot($root) == 0) {
             die "ERROR: Impossible to specify the root of the PackMan object";
@@ -126,7 +128,10 @@ if ( command_is_valid ($cmd) == 0 ) {
             print "[INFO] No packages to look for\n" if $verbose;
             exit 0;
         }
-        OSCAR::Utils::print_array (@pkgs);
+        if ($verbose) {
+            print "Packages to install: ";
+            OSCAR::Utils::print_array (@pkgs);
+        }
     } else {
         $pattern = $ARGV[1]
     }
