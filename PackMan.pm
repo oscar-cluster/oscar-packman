@@ -419,7 +419,7 @@ sub do_simple_command {
     # This is a hack to let the child behave as if it runs in a tty
     # Without it yum doesn't show progress information.
     my $pty = "/usr/bin/ptty_try";
-    if (-x $pty) {
+    if (-x $pty && ($command =~ /^yum/ || $command =~ /^\/usr\/sbin\/yum/)) {
         $command = "$pty $command";
     }
 
