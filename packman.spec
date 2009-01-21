@@ -8,7 +8,7 @@
 
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman
-Version:   		3.1.4
+Version:   		3.1.5
 Release:   		1
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:		OSCAR
@@ -52,6 +52,8 @@ make install DESTDIR=$RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Jan 20 2009 Geoffroy Vallee <valleegr@ornl.gov> 3.1.5-1
+- new upstream version (see Changelog for more details).
 * Thu Jan 15 2009 Geoffroy Vallee <valleegr@ornl.gov> 3.1.4-1
 - new upstream version (see Changelog for more details).
 * Thu Dec 04 2008 Geoffroy Vallee <valleegr@ornl.gov> 3.1.2-5
