@@ -1,6 +1,7 @@
 include ./Config.mk
 BINDIR=usr/bin
 MANDIR=usr/share/man/man3
+SOURCEDIR=/usr/src/redhat/SOURCES
 OSCARLIBDIR=$(LIBDIR)/OSCAR
 
 all:
@@ -24,7 +25,7 @@ deb ::
 	dpkg-buildpackage -rfakeroot
 
 rpm: dist
-	cp packman.tar.gz /usr/src/redhat/SOURCES
+	cp packman.tar.gz $(SOURCEDIR)
 	rpmbuild -bb ./packman.spec
 
 clean:

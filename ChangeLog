@@ -1,3 +1,7 @@
+packman-3.1.6 (not yet released):
+* Modify the Makefile so we can choose the directory to save sources when
+creating RPMs.
+
 packman-3.1.5:
 * Fix the verbose option: now we really get all the output.
 * Display less output when the verbose option is not used.
