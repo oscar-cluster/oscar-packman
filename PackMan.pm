@@ -652,6 +652,10 @@ sub clean {
 sub gencache {
     ref (my $self = shift) 
         or return (ERROR, "gencache is an instance method");
+    my $a = $self->{Repos};
+    if (scalar (@$a) == 0) {
+        return (SUCCESS, "No repository are defined");
+    }
     return ($self->do_simple_command ('gencache', @_));
 }
 
