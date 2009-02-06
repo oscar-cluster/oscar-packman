@@ -1,8 +1,11 @@
 include ./Config.mk
+
+DESTDIR=
 BINDIR=usr/bin
 MANDIR=usr/share/man/man3
 SOURCEDIR=/usr/src/redhat/SOURCES
 OSCARLIBDIR=$(LIBDIR)/OSCAR
+PKGDEST=
 
 all:
 	/usr/bin/pod2man --section=3 packman       | gzip > packman.3.gz
@@ -22,11 +25,23 @@ install: all
 	install    -m 0644 packman.3.gz          $(DESTDIR)/$(MANDIR)
 
 deb ::
-	dpkg-buildpackage -rfakeroot
+	@if [ -n "$$UNSIGNED_OSCAR_PKG" ]; then \
+		echo "dpkg-buildpackage -rfakeroot -us -uc"; \
+		dpkg-buildpackage -rfakeroot -us -uc; \
+	else \
+		echo "dpkg-buildpackage -rfakeroot"; \
+		dpkg-buildpackage -rfakeroot; \
+	fi
+	@if [ -n "$(PKGDEST)" ]; then \
+        mv ../packman*.deb $(PKGDEST); \
+    fi
 
 rpm: dist
 	cp packman.tar.gz $(SOURCEDIR)
 	rpmbuild -bb ./packman.spec
+	@if [ -n "$(PKGDEST)" ]; then \
+		mv `rpm --eval '%{_topdir}'`/RPMS/noarch/packman-*.noarch.rpm $(PKGDEST); \
+	fi
 
 clean:
 	rm -f *~
