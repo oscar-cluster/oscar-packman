@@ -177,7 +177,7 @@ sub smart_install_command_line {
 
 # How rapt removes packages
 sub smart_remove_command_line {
-    1,'/usr/bin/rapt #repos -y #chroot remove #args'
+    1,'/usr/bin/apt-get remove #args --purge -y'
 }
 
 # Generate repository caches

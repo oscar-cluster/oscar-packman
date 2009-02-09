@@ -4,6 +4,7 @@ packman-3.1.6 (not yet released):
 creating RPMs.
 * Modify the Makefile so we can choose the directory where the binary packages
 are stored.
+* Fix the smart_remove packman command.
 
 packman-3.1.5:
 * Fix the verbose option: now we really get all the output.

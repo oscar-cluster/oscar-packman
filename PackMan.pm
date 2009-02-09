@@ -626,7 +626,7 @@ sub smart_remove {
     if ((scalar @_) == 0) {
         return (SUCCESS, "");
     }
-    return ($self-> ('smart_remove', @_));
+    return ($self->do_simple_command ('smart_remove', @_));
 }
 
 # Command the smart package manager to update each of the package files
