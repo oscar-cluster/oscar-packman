@@ -1,4 +1,4 @@
-packman-3.1.6 (not yet released):
+packman-3.1.6:
 * Fix a failure when trying the prepare an empty repository.
 * Modify the Makefile so we can choose the directory to save sources when
 creating RPMs.
