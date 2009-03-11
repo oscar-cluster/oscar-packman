@@ -1,3 +1,8 @@
+packman-3.1.7 (not yet released):
+* Deactivate try_ptty.
+* Packages are not installed twice any more during the installation of a set
+of packages.
+
 packman-3.1.6:
 * Fix a failure when trying the prepare an empty repository.
 * Modify the Makefile so we can choose the directory to save sources when

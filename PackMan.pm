@@ -418,10 +418,10 @@ sub do_simple_command {
 
     # This is a hack to let the child behave as if it runs in a tty
     # Without it yum doesn't show progress information.
-    my $pty = "/usr/bin/ptty_try";
-    if (-x $pty && ($command =~ /^yum/ || $command =~ /^\/usr\/sbin\/yum/)) {
-        $command = "$pty $command";
-    }
+#     my $pty = "/usr/bin/ptty_try";
+#     if (-x $pty && ($command =~ /^yum/ || $command =~ /^\/usr\/sbin\/yum/)) {
+#         $command = "$pty $command";
+#     }
 
     my $rr = 0;
     if ($aggregatable) {
@@ -610,7 +610,7 @@ sub smart_install ($@) {
         }
         close (DAT);
     }
-    return ($self->do_simple_command ('smart_install', @pkgs));
+    return (SUCCESS, "Install succeed");
 }
 
 # Command the smart package manager to remove each of the package files
