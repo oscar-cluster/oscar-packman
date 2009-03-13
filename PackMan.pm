@@ -572,16 +572,22 @@ sub smart_install ($@) {
     if ((scalar @pkgs) == 0) {
         return (SUCCESS, "smart_install successful");
     }
+    my ($err, @output, $line);
     # If the image does not exist for a given RPM based image, we need to
     # bootstrap the image. For Debian system, RAPT deals with it.
-    if (defined ($self->{Distro}) && $self->{Format} eq "RPM"
-        && defined ($self->{ChRoot}) && (! -d $self->{ChRoot})) {
-        # We need first the list of packages for a basic image
+    if ($self->{Format} eq "RPM" && defined ($self->{ChRoot}) 
+                                 && (! -d $self->{ChRoot})) {
+        print "[INFO] Bootstrapping the image...\n";
+        
+        # If this is an RPM based image, we need the following directory to
+        # avoid error messages everytime we try to install a package.
+        require File::Path;
+        File::Path::mkpath ($self->{ChRoot}."/var/lib/yum");
         my $filerpmlist;
         if (defined $ENV{OSCAR_HOME}) {
-            $filerpmlist = "$ENV{OSCAR_HOME}/oscarsamples/";
+            $filerpmlist = "$ENV{OSCAR_HOME}/oscarsamples";
         } else {
-            $filerpmlist = "/usr/share/oscar/oscarsamples/";
+            $filerpmlist = "/usr/share/oscar/oscarsamples";
         }
         my ($dist, $ver, $arch)
             = OSCAR::PackagePath::decompose_distro_id ($self->{Distro});
@@ -592,23 +598,38 @@ sub smart_install ($@) {
             return (ERROR, "ERROR: Impossible to detect the distro ".
                            "($self->{Distro})");
         }
-        my $compat_distro = "$os->{compat_distro}-$ver-$arch";
-        $filerpmlist .= "$compat_distro.rpmlist";
+        # TODO: Note that this is actually a problem because we do not allow
+        # users to overwrite the file with the list of binary packages.
+        my $distro = "$dist-$ver-$os";
+        my $compat_distro = "$os->{compat_distro}-$os->{compat_distrover}-$arch";
+        if ( -d "$filerpmlist/$distro.rpmlist" ) {
+            $filerpmlist .= "/$distro.rpmlist";
+        } elsif ( -d "$filerpmlist/$compat_distro.rpmlist" ) {
+            $filerpmlist .= "/$compat_distro.rpmlist";
+        } else {
+            return (ERROR, "ERROR: Impossible to open the file with the list ".
+                           "of binary packages for image bootstrapping");
+        }
         open(DAT, $filerpmlist)
             || (return(ERROR, "ERROR: Could not open file $filerpmlist"));
-        my ($err, @output, $line);
         while ($line = <DAT>) {
             next if (!OSCAR::Utils::is_a_valid_string ($line));
             $line = OSCAR::Utils::trim ($line);
             next if ($line =~ /^#/);
-            push (@pkgs, $line);
             ($err, @output) = $self->do_simple_command ('smart_install',
                               $line);
-#            if ($err == ERROR) {
-#                print STDERR "Impossible to install $line\n";
-#            }
+            if ($err == ERROR) {
+                print STDERR "Impossible to install $line\n";
+            }
         }
         close (DAT);
+    }
+
+    # Now that the image is bootstrapped, we can actually install the packages.
+    ($err, @output) = $self->do_simple_command ('smart_install', @pkgs);
+
+    if ($err) {
+        return (ERROR, join("\n", @output));
     }
     return (SUCCESS, "Install succeed");
 }
