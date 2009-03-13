@@ -1,4 +1,4 @@
-packman-3.1.7 (not yet released):
+packman-3.1.7:
 * Deactivate try_ptty.
 * Packages are not installed twice any more during the installation of a set
 of packages.
