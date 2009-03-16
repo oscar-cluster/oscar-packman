@@ -600,15 +600,17 @@ sub smart_install ($@) {
         }
         # TODO: Note that this is actually a problem because we do not allow
         # users to overwrite the file with the list of binary packages.
-        my $distro = "$dist-$ver-$os";
+        my $distro = "$dist-$ver-$arch";
         my $compat_distro = "$os->{compat_distro}-$os->{compat_distrover}-$arch";
-        if ( -d "$filerpmlist/$distro.rpmlist" ) {
+        print ("Checking config file in $filerpmlist...\n");
+        if ( -f "$filerpmlist/$distro.rpmlist" ) {
             $filerpmlist .= "/$distro.rpmlist";
-        } elsif ( -d "$filerpmlist/$compat_distro.rpmlist" ) {
+        } elsif ( -f "$filerpmlist/$compat_distro.rpmlist" ) {
             $filerpmlist .= "/$compat_distro.rpmlist";
         } else {
             return (ERROR, "ERROR: Impossible to open the file with the list ".
-                           "of binary packages for image bootstrapping");
+                           "of binary packages for image bootstrapping ".
+                           "($distro, $compat_distro)");
         }
         open(DAT, $filerpmlist)
             || (return(ERROR, "ERROR: Could not open file $filerpmlist"));
