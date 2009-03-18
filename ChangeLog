@@ -1,4 +1,4 @@
-packman-3.1.8 (not yet released):
+packman-3.1.8:
 * Correctly bootstrap RPM based images.
 
 packman-3.1.7:
