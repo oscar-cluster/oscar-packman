@@ -239,7 +239,8 @@ sub status {
     ref (my $self = shift) or croak "status is an instance method";
     my $str = "Packman status:\n";
     $str .= "\tFormat: ".$self->{Format}."\n";
-    $str .= "\tAssociated distro: " . $self->{Distro} . "\n";
+    $str .= "\tAssociated distro: " . $self->{Distro} . "\n"
+        if (defined ($self->{Distro}));
     $str .= "\tChRoot: " . $self->{ChRoot} . "\n" if defined $self->{ChRoot};
     my $repo_ref = $self->{Repos};
     $str .= "\tNumber of repos: " . scalar (@$repo_ref) . "\n" 
