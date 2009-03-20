@@ -319,6 +319,10 @@ sub command_helper {
             my $repos = join(" ",@repos_args);
             $cl =~ s/#repos/$repos/g;
         }
+    } else {
+        # if no repo is specified, we just remove the #repos string from
+        # the command
+        $cl =~ s/#repos//g;
     }
 
     if (defined ($self->{Distro})) {
@@ -644,13 +648,14 @@ sub smart_install ($@) {
 #         - $err contains a failure value if any of the operations fails.
 #         - $out_ref is a reference to an array containing the output of the
 #           command.
-sub smart_remove {
+sub smart_remove ($@) {
     ref (my $self = shift) 
         or return (ERROR, "ERROR: smart_remove is an instance method");
-    if ((scalar @_) == 0) {
+    my @pkgs = @_;
+    if ((scalar @pkgs) == 0) {
         return (SUCCESS, "");
     }
-    return ($self->do_simple_command ('smart_remove', @_));
+    return ($self->do_simple_command ('smart_remove', @pkgs));
 }
 
 # Command the smart package manager to update each of the package files
