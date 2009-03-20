@@ -146,7 +146,7 @@ if ( command_is_valid ($cmd) == 0 ) {
                 . join ("\n", @output) . ")";
         }
     } elsif ($cmd eq "remove") {
-        ($rc, @output) = $pm->remove(@pkgs);
+        ($rc, @output) = $pm->smart_remove(@pkgs);
         if ($rc == ERROR) {
             die "ERROR: Impossible to remove " . join (", ", @pkgs);
         }

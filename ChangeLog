@@ -1,3 +1,6 @@
+packman-3.1.9 (not yet released):
+* Call the correct function backend when removing packages.
+
 packman-3.1.8:
 * Correctly bootstrap RPM based images.
 
