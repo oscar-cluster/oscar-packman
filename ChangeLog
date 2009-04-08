@@ -1,4 +1,4 @@
-packman-3.1.9 (not yet released):
+packman-3.1.9:
 * Call the correct function backend when removing packages.
 * Fix a problem when using package to remove package: the command was not correctly built.
 
