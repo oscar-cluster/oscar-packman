@@ -924,7 +924,7 @@ sub rpm_pkg_data_to_hash ($@) {
         $conflicts, $isdesc, $dist);
     my %o;
 
-    OSCAR::Utils::print_array (@output);
+    OSCAR::Utils::print_array (@output) if $verbose;
     my @tokens;
 
     for (my $i=0; $i < scalar (@output); $i++) {
