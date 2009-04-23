@@ -1,3 +1,8 @@
+packman-3.1.10 (not yet released):
+* Before to include a repository, we check that the repository URL is valid
+(if not the repository is not used). This avoids packman to crash when the
+OSCAR or distro repository is not yet defined.
+
 packman-3.1.9:
 * Call the correct function backend when removing packages.
 * Fix a problem when using package to remove package: the command was not correctly built.

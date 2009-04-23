@@ -213,6 +213,7 @@ sub distro {
     if (@_) {
         my $distro = shift;
         require OSCAR::PackagePath;
+        require OSCAR::Utils;
         $self->{Distro} = $distro;
         my ($dist, $ver, $arch)
             = OSCAR::PackagePath::decompose_distro_id ($distro);
@@ -226,8 +227,8 @@ sub distro {
         my $drepo = OSCAR::PackagePath::distro_repo_url(os=>$os);
         my $orepo = OSCAR::PackagePath::oscar_repo_url(os=>$os);
         my @repos;
-        unshift (@repos, $drepo);
-        unshift (@repos, $orepo);
+        unshift (@repos, $drepo) if (OSCAR::Utils::is_a_valid_string ($drepo));
+        unshift (@repos, $orepo) if (OSCAR::Utils::is_a_valid_string ($orepo));
         $self->{Repos} = \@repos;
         return 1;
     } else {
