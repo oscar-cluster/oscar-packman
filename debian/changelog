@@ -1,8 +1,20 @@
+packman (3.1.10-1) hardy; urgency=low
+
+  * New upstream version.
+
+ -- Geoffroy Vallee <valleegr@ornl.gov>  Thu, 23 Apr 2009 20:36:48 -0400
+
 packman (3.1.9-1) intrepid; urgency=low
 
   * New upstream version.
 
  -- Geoffroy Vallee <valleegr@ornl.gov>  Tue, 07 Apr 2009 21:23:02 -0400
+
+packman (3.1.8-2) hardy; urgency=low
+
+  * New upstream version.
+
+ -- Geoffroy Vallee <valleegr@ornl.gov>  Mon, 23 Mar 2009 01:05:40 -0400
 
 packman (3.1.8-1) hardy; urgency=low
 
