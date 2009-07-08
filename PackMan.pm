@@ -224,11 +224,17 @@ sub distro {
             carp "ERROR: Cannot recognized the OS ($distro)";
             return 0;
         }
-        my $drepo = OSCAR::PackagePath::distro_repo_url(os=>$os);
-        my $orepo = OSCAR::PackagePath::oscar_repo_url(os=>$os);
+        my $drepo_str = OSCAR::PackagePath::distro_repo_url(os=>$os);
+        my $orepo_str = OSCAR::PackagePath::oscar_repo_url(os=>$os);
+        my @drepo = split (",", $drepo_str);
+        my @orepo = split (",", $orepo_str);
         my @repos;
-        unshift (@repos, $drepo) if (OSCAR::Utils::is_a_valid_string ($drepo));
-        unshift (@repos, $orepo) if (OSCAR::Utils::is_a_valid_string ($orepo));
+        foreach my $r (@drepo) {
+            unshift (@repos, $r) if (OSCAR::Utils::is_a_valid_string ($r));
+        }
+        foreach my $r (@orepo) {
+            unshift (@repos, $r) if (OSCAR::Utils::is_a_valid_string ($r));
+        }
         $self->{Repos} = \@repos;
         return 1;
     } else {
