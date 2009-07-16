@@ -18,6 +18,7 @@ use POSIX;
 
 use OSCAR::PackManDefs;
 use OSCAR::OCA::OS_Detect;
+use OSCAR::Utils;
 
 our $VERSION;
 $VERSION = "r" . q$Rev$ =~ /(\d+)/;
@@ -226,9 +227,14 @@ sub distro {
         }
         my $drepo_str = OSCAR::PackagePath::distro_repo_url(os=>$os);
         my $orepo_str = OSCAR::PackagePath::oscar_repo_url(os=>$os);
-        my @drepo = split (",", $drepo_str);
-        my @orepo = split (",", $orepo_str);
-        my @repos;
+        my (@drepo, @orepo);
+        if (OSCAR::Utils::is_a_valid_string ($drepo_str)) {
+            @drepo = split (",", $drepo_str);
+        }
+        if (OSCAR::Utils::is_a_valid_string ($orepo_str)) {
+            @orepo = split (",", $orepo_str);
+        }
+        my (@repos, @drepos, @orepos);
         foreach my $r (@drepo) {
             unshift (@repos, $r) if (OSCAR::Utils::is_a_valid_string ($r));
         }
