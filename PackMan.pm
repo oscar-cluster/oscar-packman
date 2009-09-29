@@ -630,6 +630,7 @@ sub smart_install ($@) {
                            "of binary packages for image bootstrapping ".
                            "($distro, $compat_distro)");
         }
+        print ("Selected config file: $filerpmlist\n");
         open(DAT, $filerpmlist)
             || (return(ERROR, "ERROR: Could not open file $filerpmlist"));
         while ($line = <DAT>) {
