@@ -649,7 +649,7 @@ sub smart_install ($@) {
     # Now that the image is bootstrapped, we can actually install the packages.
     ($err, @output) = $self->do_simple_command ('smart_install', @pkgs);
 
-    if ($err) {
+    if (defined ($err) && $err) {
         if (defined (@output)) {
             return (ERROR, "No error message");
         } else {
