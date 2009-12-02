@@ -650,7 +650,7 @@ sub smart_install ($@) {
     ($err, @output) = $self->do_simple_command ('smart_install', @pkgs);
 
     if (defined ($err) && $err) {
-        if (defined (@output)) {
+        if (scalar (@output) == 0) {
             return (ERROR, "No error message");
         } else {
             return (ERROR, join("\n", @output));
