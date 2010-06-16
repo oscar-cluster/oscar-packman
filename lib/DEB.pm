@@ -150,6 +150,11 @@ sub query_installed_command_line {
   1, 'dpkg-query -W --showformat \'found: ${Package} ${Version} ${Architecture}\\n\' #args'
 }
 
+# How to get the list of all installed packages (not aggregatable)
+sub query_list_installed_pkgs_command_line {
+  1, 'dpkg-query -W --showformat \'${Package}\n\''
+}
+
 # How dpkg changes root
 sub chroot_arg_command_line {
   '--root=#chroot'

@@ -141,6 +141,10 @@ sub query_installed_command_line {
   1, 'rpm --query --qf \'found: %{NAME} %{VERSION}-%{RELEASE} %{ARCH}\\n\' #args'
 }
 
+sub query_list_installed_pkgs_command_line {
+  1, 'rpm -qa'
+}
+
 # How rpm(8) changes root
 sub chroot_arg_command_line {
   '--root #chroot'

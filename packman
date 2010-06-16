@@ -46,7 +46,8 @@ sub command_is_valid ($) {
     my $cmd = shift;
 
     if ( OSCAR::Utils::is_a_valid_string ($cmd) && (($cmd eq "install")
-        || ($cmd eq "remove") || ($cmd eq "search") || ($cmd eq "show"))) {
+        || ($cmd eq "remove") || ($cmd eq "search") || ($cmd eq "show") 
+        || ($cmd eq "list"))) {
         return 1;
     } else {
         return 0;
@@ -76,7 +77,11 @@ if ( command_is_valid ($cmd) == 0 ) {
     die "ERROR: you try to execute an unsupported command $ARGV[0]";
 } else {
     if (!OSCAR::Utils::is_a_valid_string ($distro)) {
-        die "ERROR: You must specify which distro to use to manage packages";
+        # if the distro is not specified, we try to detect the local distro
+        $distro = OSCAR::PackagePath::get_distro ();
+        if (!OSCAR::Utils::is_a_valid_string ($distro)) {
+            die "ERROR: Distro not specified and detection impossible";
+        }
     }
 
     # Based on the distro id we detect the underneath binary package format
@@ -124,13 +129,9 @@ if ( command_is_valid ($cmd) == 0 ) {
             push (@pkgs, $ARGV[$p]);
             $pos++;
         }
-        if (scalar (@pkgs) == 0) {
+        if ($cmd ne "list" && scalar (@pkgs) == 0) {
             print "[INFO] No packages to look for\n" if $verbose;
             exit 0;
-        }
-        if ($verbose) {
-            print "Packages to install: ";
-            OSCAR::Utils::print_array (@pkgs);
         }
     } else {
         $pattern = $ARGV[1]
@@ -140,6 +141,10 @@ if ( command_is_valid ($cmd) == 0 ) {
     print "\n" if $verbose;
     my ($rc, @output);
     if ($cmd eq "install") {
+        if ($verbose) {
+            print "Packages to install: ";
+            OSCAR::Utils::print_array (@pkgs);
+        }
         ($rc, @output) = $pm->smart_install(@pkgs);
         if ($rc == ERROR) {
             die "ERROR: Impossible to install " . join (", ", @pkgs) . " ("
@@ -167,6 +172,11 @@ if ( command_is_valid ($cmd) == 0 ) {
         } else {
             print Dumper %data;
         }
+    } elsif ($cmd eq "list") {
+        my @data;
+        print ("Querying all installed packages...\n");
+        @data = $pm->query_list_installed_pkgs();
+        OSCAR::Utils::print_array (@data);
     } else {
         die "ERROR: Unsupported command ($cmd)";
     }

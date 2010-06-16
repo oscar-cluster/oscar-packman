@@ -1,5 +1,8 @@
-packman-3.1.13 (not yet released):
+packman-3.2.0 (not yet released):
 * Reorganize slightly the code.
+* Try to detect the local distribution if not distribution is specified.
+* Include the support of a list command which allows to get the list of all
+installed packages.
 
 packman-3.1.12:
 * Improve PackMan output.

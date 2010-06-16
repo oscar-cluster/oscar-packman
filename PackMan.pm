@@ -719,6 +719,40 @@ sub gencache {
 #     return ($self->do_simple_command ('query_opkgs', @opkgs);
 # }
 
+sub query_list_installed_pkgs {
+    ref (my $self = shift)
+        or return (ERROR, "query_list_installed_pkgs is an instance method");
+    my @installed;
+
+    # save existing callback
+    my ($save_cb, $save_cba);
+    if ($self->{Callback}) {
+        $save_cb = $self->{Callback};
+        $save_cba = $self->{Callback_Args};
+    }
+
+    # filter routine to be used as temporary callback
+    sub filter1 {
+        my ($line, $installed) = @_;
+        push (@$installed, $line);
+    }
+
+    # register temporary callback
+    $self->output_callback(\&filter1, \@installed);
+
+    # execute command and temporary callback for each output line
+    $self->do_simple_command('query_list_installed_pkgs', @_);
+    if ($save_cb) {
+        $self->output_callback($save_cb, @{$save_cba});
+    } else {
+        delete $self->{Callback};
+        delete $self->{Callback_Args};
+    }
+#    vprint("PM:query_list_installed_pkgs: returns:\n".
+#        OSCAR::Utils::print_array(@installed)."\n");
+    return @installed;     
+}
+
 # Query the underlying package manager to report the list of which of the
 # packages in the argument list are presently installed and which are
 # uninstalled.
@@ -756,13 +790,12 @@ sub query_installed {
                 push (@{$installed->{$name}},
                      { version => $version, arch => $arch });
             } else {
-                $installed->{$name} 
+                $installed->{$name}
                     = [ { version => $version, arch => $arch } ];
             }
             vprint("PM:filter_installed: $line\n");
         }
     }
-
     # register temporary callback
     $self->output_callback(\&filter_installed, \%installed);
 
