@@ -1,4 +1,4 @@
-packman-3.2.0 (not yet released):
+packman-3.2.0:
 * Reorganize slightly the code.
 * The packman script tries to detect the local distribution if not distribution
 is specified.

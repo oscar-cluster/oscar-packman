@@ -8,11 +8,11 @@
 
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman
-Version:   		3.1.12
+Version:   		3.2.0
 Release:   		1
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
-Distribution:		OSCAR
-Packager:		Erich Focht <efocht@hpce.nec.com>
+Distribution:	OSCAR
+Packager:		Geoffroy Vallee <valleegr@ornl.gov>
 License: 		GPL
 Group:     		Development/Libraries
 Source:			%{name}.tar.gz
@@ -52,6 +52,8 @@ make install DESTDIR=$RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Feb 08 2011 Geoffroy Vallee <valleegr@ornl.gov> 3.2.0-1
+- new upstream version (see Changelog for more details).
 * Tue Jan 05 2010 Geoffroy Vallee <valleegr@ornl.gov> 3.1.12-1
 - new upstream version (see Changelog for more details).
 * Thu Jul 16 2009 Geoffroy Vallee <valleegr@ornl.gov> 3.1.11-1
