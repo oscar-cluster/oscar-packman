@@ -3,7 +3,6 @@ include ./Config.mk
 DESTDIR=
 BINDIR=usr/bin
 MANDIR=usr/share/man/man3
-SOURCEDIR=/usr/src/redhat/SOURCES
 OSCARLIBDIR=$(LIBDIR)/OSCAR
 PKGDEST=
 SUBDIRS := lib
@@ -36,7 +35,7 @@ deb ::
     fi
 
 rpm: dist
-	cp packman.tar.gz $(SOURCEDIR)
+	cp packman.tar.gz `rpm --eval '%_sourcedir'`
 	rpmbuild -bb ./packman.spec
 	@if [ -n "$(PKGDEST)" ]; then \
 		mv `rpm --eval '%{_topdir}'`/RPMS/noarch/packman-*.noarch.rpm $(PKGDEST); \

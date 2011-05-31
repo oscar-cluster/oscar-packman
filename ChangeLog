@@ -1,3 +1,7 @@
+packman-3.2.1 (not yet released):
+- Automatically detect the source directory on RPM based systems (patch from
+O. Lahaye).
+
 packman-3.2.0:
 * Reorganize slightly the code.
 * The packman script tries to detect the local distribution if not distribution
