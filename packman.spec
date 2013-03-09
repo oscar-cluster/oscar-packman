@@ -9,7 +9,7 @@
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman
 Version:   		3.2.0
-Release:   		1
+Release:   		2
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:	OSCAR
 Packager:		Geoffroy Vallee <valleegr@ornl.gov>
@@ -18,7 +18,7 @@ Group:     		Development/Libraries
 Source:			%{name}.tar.gz
 BuildRoot: 		%{_localstatedir}/%{name}-root
 BuildArch:		noarch
-Requires:       	oscar-base-lib, yume >= 2.8.2
+Requires:       	oscar-base-lib, yume >= 2.8.2, perl-Switch
 AutoReq :       	yes
 Provides:       	perl(OSCAR::PackManDefs)
 AutoReqProv: 		no
@@ -52,6 +52,8 @@ make install DESTDIR=$RPM_BUILD_ROOT
 
 
 %changelog
+* Sat Mar  9 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 3.2.0-2
+- Add missing require perl-Switch.
 * Tue Feb 08 2011 Geoffroy Vallee <valleegr@ornl.gov> 3.2.0-1
 - new upstream version (see Changelog for more details).
 * Tue Jan 05 2010 Geoffroy Vallee <valleegr@ornl.gov> 3.1.12-1
