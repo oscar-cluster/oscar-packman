@@ -9,16 +9,16 @@
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman
 Version:   		3.2.0
-Release:   		2
+Release:   		3%{?dist}
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
-Distribution:	OSCAR
+Distribution:		OSCAR
 Packager:		Geoffroy Vallee <valleegr@ornl.gov>
 License: 		GPL
 Group:     		Development/Libraries
 Source:			%{name}.tar.gz
 BuildRoot: 		%{_localstatedir}/%{name}-root
 BuildArch:		noarch
-Requires:       	oscar-base-lib, yume >= 2.8.2, perl-Switch
+Requires:       	oscar-base-lib, yume >= 2.8.2, perl(Switch)
 AutoReq :       	yes
 Provides:       	perl(OSCAR::PackManDefs)
 AutoReqProv: 		no
@@ -37,21 +37,34 @@ interface.
 %define __perl_provides %{_builddir}/%{name}-root
 
 %build
-make
+%__make
 
 %install
 %__rm -rf $RPM_BUILD_ROOT
-make install DESTDIR=$RPM_BUILD_ROOT
+%__make install DESTDIR=$RPM_BUILD_ROOT
 
 %clean rpms
 %__rm -rf $RPM_BUILD_ROOT
 
 %files 
 %defattr(-,root,root)
-/usr/*
-
+%{_bindir}/packman
+%{_mandir}/man3/%{name}*
+%{perl_vendorlib}/OSCAR/PackMan.pm
+%{perl_vendorlib}/OSCAR/PackManDefs.pm
+%dir %{perl_vendorlib}/OSCAR/PackMan
+%{perl_vendorlib}/OSCAR/PackMan/DEB.pm
+%{perl_vendorlib}/OSCAR/PackMan/RPM.pm
 
 %changelog
+* Wed Mar 13 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 3.2.0-3
+- Fix %%file section to avoid conflicting with filesystem package.
+  (/usr/bin and such system directories should no be owned by any
+   package except the filesystem package).
+- Fix perl-Switch dependancy. used perl(Switch) instead. This avoids
+  issues with OS that include perl-Switch package inside the main perl
+  package. This also fixes the 
+- Added the dist tag in the release.
 * Sat Mar  9 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 3.2.0-2
 - Add missing require perl-Switch.
 * Tue Feb 08 2011 Geoffroy Vallee <valleegr@ornl.gov> 3.2.0-1

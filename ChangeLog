@@ -1,6 +1,13 @@
 packman-3.2.1 (not yet released):
 - Automatically detect the source directory on RPM based systems (patch from
-O. Lahaye).
+- rpm: fixed the %file section to avoid including system directories and conflict
+with the filesystem pachage.
+- rpm: Fixed the perl-Switch dependancy by using perl(Switch) instead. This avoids
+issues with OS that include perl-Switch package inside the main perl package.
+This also fixes the issue on CentOS-6 were rpmforge repo is configured (want
+to install the perl-Switch rpm over the Switch.pm file provided by the system
+perl package.
+- rpm: Added the dist tag in the release of the rpm.
 
 packman-3.2.0:
 * Reorganize slightly the code.
