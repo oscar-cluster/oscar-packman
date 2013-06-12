@@ -9,7 +9,7 @@
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman
 Version:   		3.2.0
-Release:   		3%{?dist}
+Release:   		4%{?dist}
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:		OSCAR
 Packager:		Geoffroy Vallee <valleegr@ornl.gov>
@@ -18,7 +18,9 @@ Group:     		Development/Libraries
 Source:			%{name}.tar.gz
 BuildRoot: 		%{_localstatedir}/%{name}-root
 BuildArch:		noarch
-Requires:       	oscar-base-lib, yume >= 2.8.2, perl(Switch)
+# createrepo used by yume --prepare. dep is here because yume doesn't have this requirement
+# indeed, yume on nodes don't need --prepare associated requirements.
+Requires:       	oscar-base-lib, yume >= 2.8.2, perl(Switch), createrepo
 AutoReq :       	yes
 Provides:       	perl(OSCAR::PackManDefs)
 AutoReqProv: 		no
@@ -57,6 +59,8 @@ interface.
 %{perl_vendorlib}/OSCAR/PackMan/RPM.pm
 
 %changelog
+* Wed Jun 12 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 3.2.0-4
+- Add missing requires "createrepo".
 * Wed Mar 13 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 3.2.0-3
 - Fix %%file section to avoid conflicting with filesystem package.
   (/usr/bin and such system directories should no be owned by any
