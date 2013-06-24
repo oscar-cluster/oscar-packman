@@ -443,7 +443,7 @@ sub do_simple_command {
 
     my $rr = 0;
     if ($aggregatable) {
-        @captured_output = undef;
+        splice(@captured_output);
         my $all_args = join " ", @lov;
         $cl =~ s/#args/$all_args/g;
         print "Command to execute: $command $cl\n" if $verbose;
@@ -483,7 +483,7 @@ sub do_simple_command {
         }
     } else {
         foreach my $package (@lov) {
-            @captured_output = undef;
+            splice(@captured_output);
             my $pid = open (SYSTEM, "-|");
             defined ($pid) 
                 or return (ERROR, "cannot fork: $!");
