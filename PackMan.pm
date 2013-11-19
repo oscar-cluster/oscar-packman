@@ -18,6 +18,9 @@ use POSIX;
 
 use OSCAR::PackManDefs;
 use OSCAR::OCA::OS_Detect;
+use OSCAR::OCA::OS_Settings;
+use OSCAR::SystemServices;
+use OSCAR::SystemServicesDefs;
 use OSCAR::Utils;
 
 our $VERSION;
@@ -1127,16 +1130,15 @@ sub repo_unexport {
 }
 
 # locate httpd configuration directory
-# this is somewhat hardwired and might need to be extended
 sub find_httpdir {
-    my $httpdir;
-    for my $d ("httpd", "apache", "apache2") {
-        if (-d "/etc/$d/conf.d") {
-            $httpdir = "/etc/$d/conf.d";
-            last;
-        }
-    }
-    vprint("Found httpdir = $httpdir\n");
+    my $httpdir = OSCAR::OCA::OS_Settings::getitem(HTTP()."_configdir");
+#    for my $d ("httpd", "apache", "apache2") {
+#        if (-d "/etc/$d/conf.d") {
+#            $httpdir = "/etc/$d/conf.d";
+#            last;
+#        }
+#    }
+    vprint("Using httpdir = $httpdir\n");
     return $httpdir;
 }
 
@@ -1242,13 +1244,8 @@ sub list_exported {
 }
 
 sub restart_httpd {
-    for my $httpd ("httpd", "httpd2", "apache", "apache2") {
-        if (-x "/etc/init.d/$httpd") {
-            print "Restarting $httpd\n";
-            system("/etc/init.d/$httpd restart");
-            last;
-        }
-    }
+    !system_service(HTTP(),RESTART())
+        or ( print "ERROR: Couldn't restart http service.\n", return -1);
 }
 
 sub vprint {
