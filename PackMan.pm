@@ -997,9 +997,12 @@ sub rpm_pkg_data_to_hash ($@) {
                 $summary = OSCAR::Utils::trim ($tokens[1]);
             }
             if (OSCAR::Utils::trim ($tokens[0]) eq "Description") {
-                $desc = OSCAR::Utils::trim ($output[$i+1]);
-                $i++;
+                $desc = OSCAR::Utils::trim ($tokens[1]);
             }
+            if (OSCAR::Utils::trim ($tokens[0]) eq "") {
+                $desc .= OSCAR::Utils::trim ($tokens[1]);
+            }
+            $i++ if scalar(@tokens) == 1;
         }
     	if ($name) {
         	$o{$name} = {
