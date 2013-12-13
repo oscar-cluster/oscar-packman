@@ -8,8 +8,8 @@
 
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman
-Version:   		3.2.0
-Release:   		5%{?dist}
+Version:   		3.2.1
+Release:   		1%{?dist}
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:		OSCAR
 Packager:		Geoffroy Vallee <valleegr@ornl.gov>
@@ -59,6 +59,8 @@ interface.
 %{perl_vendorlib}/OSCAR/PackMan/RPM.pm
 
 %changelog
+* Fri Dec 13 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 3.2.1-1
+- Add support for exotic package names like glibc-devel(x86-32) or perl(Pod::Man)
 * Sat Nov 30 2013 DongInn Kim <dkim@cs.indiana.edu> 3.2.0-5
 - Make the "description" field have all the description values 
   in the rpm based system.

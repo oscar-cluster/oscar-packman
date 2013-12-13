@@ -447,6 +447,8 @@ sub do_simple_command {
     my $rr = 0;
     if ($aggregatable) {
         splice(@captured_output);
+        # need to put all packages into quotes (support for perl(Pod::Man)).
+        @lov = map { "'$_'" } @lov;
         my $all_args = join " ", @lov;
         $cl =~ s/#args/$all_args/g;
         print "Command to execute: $command $cl\n" if $verbose;

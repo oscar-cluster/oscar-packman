@@ -1,4 +1,6 @@
-packman-3.2.1 (not yet released):
+packman-3.2.1:
+- Added support for package meta names like perl(Pod::Man) or
+glibc-devel(x86-32).
 - Automatically detect the source directory on RPM based systems (patch from
 - rpm: fixed the %file section to avoid including system directories and conflict
 with the filesystem pachage.
