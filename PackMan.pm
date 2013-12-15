@@ -1,4 +1,4 @@
-package PackMan;
+package OSCAR::PackMan;
 
 # Copyright (c) 2003-2004 The Trustees of Indiana University.
 # Copyright (c) 2006      Erich Focht <efocht@hpce.nec.com>

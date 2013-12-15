@@ -1,4 +1,4 @@
-package PackMan::RPM;
+package OSCAR::PackMan::RPM;
 
 # Copyright (c) 2003-2004 The Trustees of Indiana University.
 #

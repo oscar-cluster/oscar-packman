@@ -1,4 +1,4 @@
-package PackMan::DEB;
+package OSCAR::PackMan::DEB;
 
 #   $Id$
 #
