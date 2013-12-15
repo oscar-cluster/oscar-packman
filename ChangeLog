@@ -1,3 +1,8 @@
+packman-3.2.2:
+- Moved modules to %{perl_vendorlib}
+- Fixed so called ugly hack in PackMan.pm (now useless)
+- enabled automatic dependancy generator in rpm.
+
 packman-3.2.1:
 - Added support for package meta names like perl(Pod::Man) or
 glibc-devel(x86-32).

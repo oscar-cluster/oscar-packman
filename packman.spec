@@ -1,8 +1,8 @@
 
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman
-Version:   		3.2.1
-Release:   		2%{?dist}
+Version:   		3.2.2
+Release:   		1%{?dist}
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:		OSCAR
 Packager:		Geoffroy Vallee <valleegr@ornl.gov>
@@ -49,6 +49,8 @@ interface.
 %{perl_vendorlib}/OSCAR/PackMan/RPM.pm
 
 %changelog
+* Sun Dec 15 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 3.2.2-1
+- New version (see ChangeLog for more info)
 * Sun Dec 15 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 3.2.1-2
 - Re-enabled automatic perl dependancy generator.
 * Fri Dec 13 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 3.2.1-1
