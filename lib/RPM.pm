@@ -16,7 +16,7 @@ our $VERSION;
 $VERSION = "r" . q$Rev$ =~ /(\d+)/;
 
 # Must use this form due to compile-time checks by PackMan.
-use base qw(PackMan);
+use base qw(OSCAR::PackMan);
 
 # Preloaded methods go here.
 # boilerplate constructor because PackMan's is "abstract"
@@ -209,23 +209,23 @@ sub show_repo_command_line {
 __END__
 =head1 NAME
 
-PackMan::RPM - Perl extension for Package Manager abstraction for RPMs
+OSCAR::PackMan::RPM - Perl extension for Package Manager abstraction for RPMs
 
 =head1 SYNOPSIS
 
   Constructors
 
   # in environment where RPM is the default package manager:
-  use PackMan;
+  use OSCAR::PackMan;
   $pm = PackMan->new;
 
-  use PackMan::RPM;
+  use OSCAR::PackMan::RPM;
   $pm = RPM->new;	or RPM->RPM;
 
-  use PackMan;
+  use OSCAR::PackMan;
   $pm = PackMan->RPM;
 
-  use PackMan;
+  use OSCAR::PackMan;
   $pm = PackMan::RPM->new;	or PackMan::RPM->RPM;
 
   For more, see PackMan.
@@ -323,7 +323,7 @@ PackMan::RPM - Perl extension for Package Manager abstraction for RPMs
 
 =head1 SEE ALSO
 
-  PackMan
+  OSCAR::PackMan
   rpm(8)
 
 =head1 AUTHOR

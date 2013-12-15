@@ -33,7 +33,7 @@ our $VERSION;
 $VERSION = "r" . q$Rev$ =~ /(\d+)/;
 
 # Must use this form due to compile-time checks by PackMan.
-use base qw(PackMan);
+use base qw(OSCAR::PackMan);
 
 # Preloaded methods go here.
 # boilerplate constructor because PackMan's is "abstract"
@@ -224,26 +224,26 @@ __END__
 
 =head1 NAME
 
-PackMan::DEB - Perl extension for Package Manager abstraction for DEBs
+OSCAR::PackMan::DEB - Perl extension for Package Manager abstraction for DEBs
 
 =head1 SYNOPSIS
 
   Constructors
 
   # in environment where DEB is the default package manager:
-  use PackMan;
+  use OSCAR::PackMan;
   $pm = PackMan->new;
 
-  use PackMan::DEB;
+  use OSCAR::PackMan::DEB;
   $pm = DEB->new;	or DEB->DEB;
 
-  use PackMan;
+  use OSCAR::PackMan;
   $pm = PackMan->DEB;
 
-  use PackMan;
+  use OSCAR::PackMan;
   $pm = PackMan::DEB->new;	or PackMan::DEB->DEB;
 
-  For more, see PackMan.
+  For more, see OSCAR::PackMan.
 
 =head1 ABSTRACT
 
@@ -325,7 +325,7 @@ PackMan::DEB - Perl extension for Package Manager abstraction for DEBs
 
 =head1 SEE ALSO
 
-  PackMan
+  OSCAR::PackMan
   rpm(8)
 
 =head1 AUTHOR

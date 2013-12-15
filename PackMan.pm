@@ -1262,25 +1262,25 @@ __END__
 
 =head1 NAME
 
-PackMan - Perl extension for Package Manager abstraction
+OSCAR::PackMan - Perl extension for Package Manager abstraction
 
 =head1 SYNOPSIS
 
   Constructors
 
-  use PackMan;
-  $pm = PackMan->new;
+  use OSCAR::PackMan;
+  $pm = OSCAR::PackMan->new;
 
   Concrete package managers will always be available directly as:
 
-  use PackMan::<conc>;
+  use OSCAR::PackMan::<conc>;
   $pm = <conc>->new;
 
-  use PackMan;
-  $pm = PackMan-><conc>;
+  use OSCAR::PackMan;
+  $pm = OSCAR::PackMan-><conc>;
 
-  use PackMan;
-  $pm = PackMan::<conc>->new;
+  use OSCAR::PackMan;
+  $pm = OSCAR::PackMan::<conc>->new;
 
   Currently, the only valid value for <conc> is RPM.
 
@@ -1364,12 +1364,12 @@ PackMan - Perl extension for Package Manager abstraction
   When setting root, another method call may be chained off of it for
   quick, one-off commands:
 
-  PackMan->new->chroot ("/mnt/other_root")->install qw(list of files);
+  OSCAR::PackMan->new->chroot ("/mnt/other_root")->install qw(list of files);
 
   If you create a PackMan object with an alternative root and want to
   remember that chrooted PackMan:
 
-  $pm = PackMan->new ("/mnt/my_root");
+  $pm = OSCAR::PackMan->new ("/mnt/my_root");
   $chrooted_pm = $pm->clone;
 
   You can now change $pm back to "/":
