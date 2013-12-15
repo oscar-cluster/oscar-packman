@@ -1,15 +1,8 @@
-%define binpref /usr/bin
-%define manpref /usr/share/man/man3
-%define bintarget $RPM_BUILD_ROOT%{binpref}
-%define libtarget $RPM_BUILD_ROOT%{libpref}
-%define mantarget $RPM_BUILD_ROOT%{manpref}
-
-%define _use_internal_dependency_generator 0
 
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman
 Version:   		3.2.1
-Release:   		1%{?dist}
+Release:   		2%{?dist}
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:		OSCAR
 Packager:		Geoffroy Vallee <valleegr@ornl.gov>
@@ -20,10 +13,7 @@ BuildRoot: 		%{_localstatedir}/%{name}-root
 BuildArch:		noarch
 # createrepo used by yume --prepare. dep is here because yume doesn't have this requirement
 # indeed, yume on nodes don't need --prepare associated requirements.
-Requires:       	oscar-base-lib, yume >= 2.8.2, perl(Switch), createrepo
-AutoReq :       	yes
-Provides:       	perl(OSCAR::PackManDefs)
-AutoReqProv: 		no
+Requires:       	oscar-base-lib, yume >= 2.8.2, createrepo
 
 %description
 A collection of Perl object modules for use in the OSCAR framework (among
@@ -36,7 +26,7 @@ interface.
 %setup -n %{name}
 # We need to override the RPM dependency auto-detection which screw up
 # dependencies to Perl modules.
-%define __perl_provides %{_builddir}/%{name}-root
+#define __perl_provides %{_builddir}/%{name}-root
 
 %build
 %__make
@@ -59,6 +49,8 @@ interface.
 %{perl_vendorlib}/OSCAR/PackMan/RPM.pm
 
 %changelog
+* Sun Dec 15 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 3.2.1-2
+- Re-enabled automatic perl dependancy generator.
 * Fri Dec 13 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 3.2.1-1
 - Add support for exotic package names like glibc-devel(x86-32) or perl(Pod::Man)
 * Sat Nov 30 2013 DongInn Kim <dkim@cs.indiana.edu> 3.2.0-5
