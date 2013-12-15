@@ -97,9 +97,9 @@ if ( command_is_valid ($cmd) == 0 ) {
     require OSCAR::PackMan;
     my $pm;
     if ($os->{pkg} eq "deb") {
-        $pm = PackMan::DEB->new;
+        $pm = OSCAR::PackMan::DEB->new;
     } elsif ($os->{pkg} eq "rpm") {
-        $pm = PackMan::RPM->new;
+        $pm = OSCAR::PackMan::RPM->new;
     } else {
         die "ERROR: Unknown binary package format (".$os->{pkg}.")";
     }

@@ -39,11 +39,9 @@ my %concrete;
 
 my $format;
 
-my $installed_dir;
 
 # Preloaded methods go here.
 BEGIN {
-    $installed_dir = "OSCAR";    # ugly hack
 
 # change to qw(RPM DEB) when Deb gets written
 # If, by hook or crook, you are on a system where both RPM and DEB (and
@@ -55,17 +53,16 @@ BEGIN {
 # that's usable.
     @preference = qw(DEB RPM);
 
-    my $packman_dir = File::Spec->catdir ($installed_dir,
-                      split ("::", __PACKAGE__));
+    my $packman_dir = File::Spec->catdir (split ("::", __PACKAGE__));
     my $full_dir;
 
     foreach my $inc (@INC) {
-    $full_dir = File::Spec->catdir ($inc, $packman_dir);
-    if (-d $full_dir) {
-        last;
-    } else {
-        undef ($full_dir);
-    }
+        $full_dir = File::Spec->catdir ($inc, $packman_dir);
+        if (-d $full_dir) {
+            last;
+        } else {
+            undef ($full_dir);
+        }
     }
 
     defined ($full_dir) or
@@ -82,8 +79,6 @@ BEGIN {
             require File::Spec->catfile ($packman_dir, $pm);
             $pm =~ s/\.pm$//;
             my $module = $packman_dir;
-            # Calling isa requires that the installed directory be stripped.
-            $module =~ s:^$installed_dir/::;
             $module = join ("::", File::Spec->splitdir ($module)) . "::" . $pm;
             # if it's actually a PackMan module, remember it
             if ("$module"->isa (__PACKAGE__)) {
@@ -905,7 +900,7 @@ sub parse_rpm_search_result ($@) {
     my @opkgs;
 
     for (my $i=0; $i<scalar(@output); $i++) {
-	if (OSCAR::Utils::is_a_valid_string($output[$i])
+    if (OSCAR::Utils::is_a_valid_string($output[$i])
             && ($output[$i] =~ /^(.*)-[0-9]:(.*)$/)) {
             push (@opkgs, $1);
         }
@@ -990,10 +985,10 @@ sub rpm_pkg_data_to_hash ($@) {
                 $name = OSCAR::Utils::trim ($tokens[1]);
             } 
             if (OSCAR::Utils::trim ($tokens[0]) eq "Version") {
-		$ver = OSCAR::Utils::trim ($tokens[1]);
+                $ver = OSCAR::Utils::trim ($tokens[1]);
             } 
             if (OSCAR::Utils::trim ($tokens[0]) eq "Release") {
-		$ver .= OSCAR::Utils::trim ($tokens[1]);
+                $ver .= OSCAR::Utils::trim ($tokens[1]);
             } 
             if (OSCAR::Utils::trim ($tokens[0]) eq "Summary") {
                 $summary = OSCAR::Utils::trim ($tokens[1]);
@@ -1006,19 +1001,19 @@ sub rpm_pkg_data_to_hash ($@) {
             }
             $i++ if scalar(@tokens) == 1;
         }
-    	if ($name) {
-        	$o{$name} = {
-            package => $name,
-            version => $ver,
-            summary => $summary,
-            packager => $packager,
-            description => $desc,
-            class => $class,
-            group => $group,
-            distro => $self->{Distro},
-            conflicts => $conflicts,
-        	};
-	}
+        if ($name) {
+            $o{$name} = {
+                package => $name,
+                version => $ver,
+                summary => $summary,
+                packager => $packager,
+                description => $desc,
+                class => $class,
+                group => $group,
+                distro => $self->{Distro},
+                conflicts => $conflicts,
+            };
+        }
     }
     return %o;
 }
