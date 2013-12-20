@@ -446,7 +446,9 @@ sub do_simple_command {
         @lov = map { "'$_'" } @lov;
         my $all_args = join " ", @lov;
         $cl =~ s/#args/$all_args/g;
-        print "Command to execute: $command $cl\n" if $verbose;
+        # FIXME: make sure $verbose is set from caller.
+        #print "Command to execute: $command $cl\n" if $verbose;
+        print "Command to execute: $command $cl\n";
 
         my $pid = open(SYSTEM, "-|");
         defined ($pid) 
