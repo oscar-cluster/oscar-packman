@@ -22,6 +22,9 @@ use OSCAR::OCA::OS_Settings;
 use OSCAR::SystemServices;
 use OSCAR::SystemServicesDefs;
 use OSCAR::Utils;
+use OSCAR::Env;
+use OSCAR::Logger;
+use OSCAR::LoggerDefs;
 
 our $VERSION;
 $VERSION = "r" . q$Rev$ =~ /(\d+)/;
@@ -309,8 +312,8 @@ sub command_helper {
     $cl = join (" ", @command_line);
     my $chroot_arg;
 
-    print "No repositories available with this PackMan object\n" 
-        if ($verbose && !defined ($self->{Repos}));
+    oscar_log(5, INFO, "No repositories available with this PackMan object") 
+        if (!defined ($self->{Repos}));
     # repositories replacement
     if (defined ($self->{Repos})) {
         # substitute value of $Repos into implementation's repo_arg_command_line
@@ -406,7 +409,7 @@ sub command_helper {
 ################################################################################
 # Template for command operations.
 #
-# Return: SUCCESS if success, ERROR else.
+# Return: PM_SUCCESS if success, PM_ERROR else.
 ################################################################################
 sub do_simple_command {
     my $self = shift;
@@ -414,9 +417,9 @@ sub do_simple_command {
     local *SYSTEM;
 
     ref ($self) 
-        or return (ERROR, $command_name . " is an instance method");
+        or return (PM_ERROR, $command_name . " is an instance method");
     $self->can ($command_name . '_command_line') 
-        or return (ERROR, "Concrete " . __PACKAGE__ . " module implements ".
+        or return (PM_ERROR, "Concrete " . __PACKAGE__ . " module implements ".
                           "neither method " . $command_name . "install nor " .
                           $command_name . "_command_line");
 
@@ -446,13 +449,12 @@ sub do_simple_command {
         @lov = map { "'$_'" } @lov;
         my $all_args = join " ", @lov;
         $cl =~ s/#args/$all_args/g;
-        # FIXME: make sure $verbose is set from caller.
-        #print "Command to execute: $command $cl\n" if $verbose;
-        print "Command to execute: $command $cl\n";
+
+        oscar_log(5, INFO, "Command to execute: $command $cl");
 
         my $pid = open(SYSTEM, "-|");
         defined ($pid) 
-            or return (ERROR, "can't fork: $!");
+            or return (PM_ERROR, "can't fork: $!");
 
         if ($pid) {
             #
@@ -471,7 +473,7 @@ sub do_simple_command {
                    &{$callback}($line, @{$cbargs});
                 }
             }
-            close (SYSTEM) || print STDERR "ERROR during execution $?\n";
+            close (SYSTEM) || oscar_log(1, ERROR, "Error during execution $?");
             my $err = $?;
             if ($retval == 0) {
                 $retval = $err;
@@ -481,14 +483,14 @@ sub do_simple_command {
             # child
             #
             exec ("$command $cl")
-                or return (ERROR, "can't exec program ($command $cl): $!");
+                or return (PM_ERROR, "can't exec program ($command $cl): $!");
         }
     } else {
         foreach my $package (@lov) {
             splice(@captured_output);
             my $pid = open (SYSTEM, "-|");
             defined ($pid) 
-                or return (ERROR, "cannot fork: $!");
+                or return (PM_ERROR, "cannot fork: $!");
             select SYSTEM; $| = 1;  # try to make unbuffered
             if ($pid) {
                 #
@@ -502,7 +504,7 @@ sub do_simple_command {
                     }
                     push @captured_output, $line;
                     $rr = $self->progress_handler($line);
-                    $retval = ERROR if ($rr);
+                    $retval = PM_ERROR if ($rr);
                     if ($callback) {
                         &{$callback}($line, @{$cbargs});
                     }
@@ -519,7 +521,7 @@ sub do_simple_command {
                 my $line = $cl;
                 $line =~ s/#args/$package/g;
                 exec ("$command $line") 
-                    or return (ERROR, "can't exec program ($command $cl): $!");
+                    or return (PM_ERROR, "can't exec program ($command $cl): $!");
             }
         }
     }
@@ -540,9 +542,9 @@ sub do_simple_command {
 
 sub install ($@) {
     ref (my $self = shift) 
-        or return (ERROR, "install is an instance method");
+        or return (PM_ERROR, "install is an instance method");
     if ((scalar @_) == 0) {
-        return (SUCCESS);
+        return (PM_SUCCESS);
     }
     return ($self->do_simple_command ('install', @_));
 }
@@ -556,7 +558,7 @@ sub install ($@) {
 # [Erich Focht]: this command is deprecated. Use smart_install instead.
 sub update ($@) {
     ref (my $self = shift) 
-        or return (ERROR, "update is an instance method");
+        or return (PM_ERROR, "update is an instance method");
     return ($self->do_simple_command ('update', @_));
 }
 
@@ -569,9 +571,9 @@ sub update ($@) {
 # [Erich Focht]: this command is deprecated. Use smart_install instead.
 # sub remove {
 #     ref (my $self = shift) 
-#         or return (ERROR, "remove is an instance method");
+#         or return (PM_ERROR, "remove is an instance method");
 #     if ((scalar @_) == 0) {
-#         return (SUCCESS);
+#         return (PM_SUCCESS);
 #     }
 #     return ($self->do_simple_command ('remove', @_));
 # }
@@ -587,17 +589,17 @@ sub update ($@) {
 #           command.
 sub smart_install ($@) {
     ref (my $self = shift) 
-        or return (ERROR, "ERROR: smart_install is an instance method");
+        or return (PM_ERROR, "ERROR: smart_install is an instance method");
     my @pkgs = @_;
     if ((scalar @pkgs) == 0) {
-        return (SUCCESS, "smart_install successful");
+        return (PM_SUCCESS, "smart_install successful");
     }
     my ($err, @output, $line);
     # If the image does not exist for a given RPM based image, we need to
     # bootstrap the image. For Debian system, RAPT deals with it.
     if ($self->{Format} eq "RPM" && defined ($self->{ChRoot}) 
                                  && (! -d $self->{ChRoot})) {
-        print "[INFO] Bootstrapping the image...\n";
+        oscar_log(1, INFO, "Bootstrapping the image...");
         
         # If this is an RPM based image, we need the following directory to
         # avoid error messages everytime we try to install a package.
@@ -615,34 +617,34 @@ sub smart_install ($@) {
                                                   distro_version=>$ver,
                                                   arch=>$arch});
         if (!defined ($os)) {
-            return (ERROR, "ERROR: Impossible to detect the distro ".
+            return (PM_ERROR, "ERROR: Impossible to detect the distro ".
                            "($self->{Distro})");
         }
         # TODO: Note that this is actually a problem because we do not allow
         # users to overwrite the file with the list of binary packages.
         my $distro = "$dist-$ver-$arch";
         my $compat_distro = "$os->{compat_distro}-$os->{compat_distrover}-$arch";
-        print ("Checking config file in $filerpmlist...\n");
+        oscar_log(1, INFO, "Checking config file in $filerpmlist...");
         if ( -f "$filerpmlist/$distro.rpmlist" ) {
             $filerpmlist .= "/$distro.rpmlist";
         } elsif ( -f "$filerpmlist/$compat_distro.rpmlist" ) {
             $filerpmlist .= "/$compat_distro.rpmlist";
         } else {
-            return (ERROR, "ERROR: Impossible to open the file with the list ".
+            return (PM_ERROR, "Impossible to open the file with the list ".
                            "of binary packages for image bootstrapping ".
                            "($distro, $compat_distro)");
         }
-        print ("Selected config file: $filerpmlist\n");
+        oscar_log(1, INFO, "Selected config file: $filerpmlist");
         open(DAT, $filerpmlist)
-            || (return(ERROR, "ERROR: Could not open file $filerpmlist"));
+            || (return(PM_ERROR, "Could not open file $filerpmlist"));
         while ($line = <DAT>) {
             next if (!OSCAR::Utils::is_a_valid_string ($line));
             $line = OSCAR::Utils::trim ($line);
             next if ($line =~ /^#/);
             ($err, @output) = $self->do_simple_command ('smart_install',
                               $line);
-            if ($err == ERROR) {
-                print STDERR "Impossible to install $line\n";
+            if ($err == PM_ERROR) {
+                oscar_log(1, ERROR, "Unable to install $line");
             }
         }
         close (DAT);
@@ -653,12 +655,12 @@ sub smart_install ($@) {
 
     if (defined ($err) && $err) {
         if (scalar (@output) == 0) {
-            return (ERROR, "No error message");
+            return (PM_ERROR, "No error message");
         } else {
-            return (ERROR, join("\n", @output));
+            return (PM_ERROR, join("\n", @output));
         }
     }
-    return (SUCCESS, "Install succeed");
+    return (PM_SUCCESS, "Install succeeded");
 }
 
 # Command the smart package manager to remove each of the package files
@@ -670,10 +672,10 @@ sub smart_install ($@) {
 #           command.
 sub smart_remove ($@) {
     ref (my $self = shift) 
-        or return (ERROR, "ERROR: smart_remove is an instance method");
+        or return (PM_ERROR, "smart_remove is an instance method");
     my @pkgs = @_;
     if ((scalar @pkgs) == 0) {
-        return (SUCCESS, "");
+        return (PM_SUCCESS, "");
     }
     return ($self->do_simple_command ('smart_remove', @pkgs));
 }
@@ -686,24 +688,24 @@ sub smart_remove ($@) {
 # $out_ref is a reference to an array containing the output of the command.
 sub smart_update {
     ref (my $self = shift) 
-        or return (ERROR, "ERROR: smart_update is an instance method");
+        or return (PM_ERROR, "smart_update is an instance method");
     return ($self->do_simple_command ('smart_update', @_));
 }
 
 # Clean all smart package manager caches
 sub clean {
     ref (my $self = shift) 
-        or return (ERROR, "ERROR: clean is an instance method");
+        or return (PM_ERROR, "clean is an instance method");
     return ($self->do_clean);
 }
 
 # Generate repository caches for local repositories
 sub gencache {
     ref (my $self = shift) 
-        or return (ERROR, "gencache is an instance method");
+        or return (PM_ERROR, "gencache is an instance method");
     my $a = $self->{Repos};
     if (scalar (@$a) == 0) {
-        return (SUCCESS, "No repository are defined");
+        return (PM_SUCCESS, "No repository are defined");
     }
     return ($self->do_simple_command ('gencache', @_));
 }
@@ -723,7 +725,7 @@ sub gencache {
 
 sub query_list_installed_pkgs {
     ref (my $self = shift)
-        or return (ERROR, "query_list_installed_pkgs is an instance method");
+        or return (PM_ERROR, "query_list_installed_pkgs is an instance method");
     my @installed;
 
     # save existing callback
@@ -771,7 +773,7 @@ sub query_list_installed_pkgs {
 #
 sub query_installed {
     ref (my $self = shift) 
-        or return (ERROR, "query_installed is an instance method");
+        or return (PM_ERROR, "query_installed is an instance method");
     my %installed;
 
     # save existing callback
@@ -795,7 +797,7 @@ sub query_installed {
                 $installed->{$name}
                     = [ { version => $version, arch => $arch } ];
             }
-            vprint("PM:filter_installed: $line\n");
+            oscar_log(5, INFO, "PM:filter_installed: $line");
         }
     }
     # register temporary callback
@@ -809,7 +811,7 @@ sub query_installed {
         delete $self->{Callback};
         delete $self->{Callback_Args};
     }
-    vprint("PM:query_installed: returns:\n".Dumper(\%installed)."\n");
+    oscar_log(5, INFO, "PM:query_installed: returns:\n".Dumper(\%installed));
     return \%installed;
 }
 
@@ -822,7 +824,7 @@ sub query_installed {
 #
 sub check_installed {
     ref (my $self = shift) 
-        or return (ERROR, "check_installed is an instance method");
+        or return (PM_ERROR, "check_installed is an instance method");
     my (@pkgs) = @_;
 
     my $installed = $self->query_installed(@pkgs);
@@ -861,7 +863,7 @@ sub check_installed {
 ################################################################################
 sub parse_deb_search_result ($@) {
     ref (my $self = shift)
-        or return (ERROR, "parse_deb_search_result is an instance method");
+        or return (PM_ERROR, "parse_deb_search_result is an instance method");
     my @opkgs = @_;
 
     for (my $i=0; $i<scalar(@opkgs); $i++) {
@@ -897,7 +899,7 @@ sub parse_deb_search_result ($@) {
 ################################################################################
 sub parse_rpm_search_result ($@) {
     ref (my $self = shift)
-        or return (ERROR, "parse_deb_search_result is an instance method");
+        or return (PM_ERROR, "parse_deb_search_result is an instance method");
     my @output = @_;
     my @opkgs;
 
@@ -921,7 +923,7 @@ sub parse_rpm_search_result ($@) {
 ################################################################################
 sub search_repo ($$) {
     ref (my $self = shift)
-        or return (ERROR, "search_repo is an instance method");
+        or return (PM_ERROR, "search_repo is an instance method");
     my $pattern = shift;
     my ($rc, @output);
     my @opkgs;
@@ -932,7 +934,7 @@ sub search_repo ($$) {
         ($rc, @output) = $self->do_simple_command ('search_repo_update', $pattern);
         @opkgs = $self->parse_rpm_search_result (@output);
     } else {
-        return (ERROR, "**search_repo** unknown format (".$self->{Format}.")");
+        return (PM_ERROR, "**search_repo** unknown format (".$self->{Format}.")");
     }
     return ($rc, @opkgs);
 }
@@ -950,7 +952,7 @@ sub search_repo ($$) {
 ################################################################################
 sub find_next_rpm_pkg ($$@) {
     ref (my $self = shift) 
-        or return (ERROR, "show_repo is an instance method");
+        or return (PM_ERROR, "show_repo is an instance method");
     my ($pos, @output) = @_;
 
     for (my $i = $pos; $i < scalar (@output); $i++) {
@@ -970,7 +972,7 @@ sub find_next_rpm_pkg ($$@) {
 ################################################################################
 sub rpm_pkg_data_to_hash ($@) {
     ref (my $self = shift) 
-        or return (ERROR, "rpm_pkg_data_to_hash is an instance method");
+        or return (PM_ERROR, "rpm_pkg_data_to_hash is an instance method");
     my @output = @_;
     my ($ver, $rel, $summary, $packager, $desc, $class, $name, $group,
         $conflicts, $isdesc, $dist);
@@ -1093,7 +1095,7 @@ sub deb_pkg_data_to_hash ($@) {
 #    ($err, %hash) = $pm->show_repo("list of packages");
 sub show_repo {
     ref (my $self = shift) 
-        or return (ERROR, "show_repo is an instance method");
+        or return (PM_ERROR, "show_repo is an instance method");
     my $opkgs = shift;
     my ($ret, @o) = $self->do_simple_command ('show_repo', $opkgs);
     my %data;
@@ -1119,7 +1121,7 @@ sub show_repo {
 # through httpd
 sub repo_export {
     ref (my $self = shift) 
-        or return (ERROR, "repo_export is an instance method");
+        or return (PM_ERROR, "repo_export is an instance method");
     return add_httpd_conf(@{$self->{Repos}});
 }
 
@@ -1127,7 +1129,7 @@ sub repo_export {
 # through httpd
 sub repo_unexport {
     ref (my $self = shift) 
-        or return (ERROR, "repo_unexport is an instance method");
+        or return (PM_ERROR, "repo_unexport is an instance method");
     return del_httpd_conf(@{$self->{Repos}});
 }
 
@@ -1140,7 +1142,7 @@ sub find_httpdir {
 #            last;
 #        }
 #    }
-    vprint("Using httpdir = $httpdir\n");
+    oscar_log(5, INFO, "Using httpdir = $httpdir");
     return $httpdir;
 }
 
@@ -1156,7 +1158,7 @@ sub add_httpd_conf {
             if ($repo =~ /^(file:\/|\/)/) {
                 $repo =~ s|^file:||;
                 if (!-d $repo) {
-                    print "Could not find directory $repo. Skipping.\n";
+                    oscar_log(1, WARNING, "Could not find directory $repo. Skipping.");
                     $err++;
                     next;
                 }
@@ -1165,11 +1167,11 @@ sub add_httpd_conf {
                 $rname =~ s:/:_:g;
                 my $cname = "$httpdir/$rname.conf";
                 if (-f $cname) {
-                    print "Config file $cname already existing. Skipping.\n";
+                    oscar_log(1, WARNING, "Config file $cname already existing. Skipping.");
                     next;
                 }
-                print "Exporting $repo through httpd, ".
-                      "http://$hostname/$pname\n";
+                oscar_log(1, INFO, "Exporting $repo through httpd, ".
+                      "http://$hostname/$pname");
                 open COUT, ">$cname" or die "Could not open $cname : $!";
                 print COUT "Alias /$pname $repo\n";
                 print COUT "<Directory $repo/>\n";
@@ -1180,15 +1182,15 @@ sub add_httpd_conf {
                 close COUT;
                 ++$changed;
             } else {
-                print "Repository URL is not a local absolute path!\n";
-                print "Skipping $repo\n";
+                oscar_log(1, WARNING, "Repository URL is not a local absolute path!");
+                oscar_log(1, INFO, "Skipping $repo");
                 $err++;
                 next;
             }
         }
     } else {
-        print "Could not find directory $httpdir!\n";
-        print "Cannot setup httpd configuration for repositories.\n";
+        oscar_log(1, ERROR, "Could not find directory $httpdir!");
+        oscar_log(1, ERROR, "Cannot setup httpd configuration for repositories.");
         $err++;
     }
     restart_httpd() if ($changed);
@@ -1209,24 +1211,24 @@ sub del_httpd_conf {
             $rname =~ s:/:_:g;
             my $cname = "$httpdir/$rname.conf";
             if (-f $cname) {
-                print "Deleting config file $cname\n";
+                oscar_log(1, INFO, "Deleting config file $cname");
                 if (unlink($cname)) {
-                print "WARNING: Could not delete $cname : $!\n";
+                oscar_log(1, WARNING, "Could not delete $cname : $!");
                 $err++;
                 } else {
                 ++$changed;
                 }
             }
         } else {
-            print "Repository URL is not a local absolute path!\n";
-            print "Skipping $repo\n";
+            oscar_log(1, WARNING, "Repository URL is not a local absolute path!");
+            oscar_log(1, INFO, "Skipping $repo");
             $err++;
             next;
         }
     }
     } else {
-        print "Could not find directory $httpdir!\n";
-        print "Cannot delete httpd configuration for repositories.\n";
+        oscar_log(1, ERROR, "Could not find directory $httpdir!");
+        oscar_log(1, ERROR, "Cannot delete httpd configuration for repositories.");
         $err++;
     }
     restart_httpd() if ($changed);
@@ -1240,18 +1242,14 @@ sub list_exported {
             my $rname = basename($repoconf,".conf");
             my ($dummy, $alias,$rdir) = split(" ",`grep "^Alias" $repoconf`);
             chomp $rdir;
-            print "URL $alias : Repository --repo $rdir\n";
+            oscar_log(1, INFO, "URL $alias : Repository --repo $rdir");
         }
     }
 }
 
 sub restart_httpd {
     !system_service(HTTP(),RESTART())
-        or ( print "ERROR: Couldn't restart http service.\n", return -1);
-}
-
-sub vprint {
-    print STDERR "@_\n" if ($verbose);
+        or ( oscar_log(1, ERROR, "Couldn't restart http service."), return -1);
 }
 
 1;

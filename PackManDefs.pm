@@ -10,14 +10,14 @@ use strict;
 use base qw(Exporter);
 
 
-use constant ERROR      => -1;
-use constant SUCCESS    => 0;
+use constant PM_ERROR      => -1;
+use constant PM_SUCCESS    => 0;
 
 my @ISA = qw(Exporter);
 
 our @EXPORT = qw(
-                ERROR
-                SUCCESS
+                PM_ERROR
+                PM_SUCCESS
                 );
 
 1;
