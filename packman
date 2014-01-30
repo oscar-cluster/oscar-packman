@@ -193,7 +193,7 @@ if ( command_is_valid ($cmd) == 0 ) {
         @data = $pm->query_list_installed_pkgs();
         OSCAR::Utils::print_array (@data);
     } else {
-        oscar_log(1, ERROR, "Unsupported command ($cmd)";
+        oscar_log(1, ERROR, "Unsupported command ($cmd)");
     }
     exit 0;
 }
