@@ -189,7 +189,7 @@ if ( command_is_valid ($cmd) == 0 ) {
         }
     } elsif ($cmd eq "list") {
         my @data;
-        oscar_log(1, INFO, ("Querying all installed packages...");
+        oscar_log(1, INFO, "Querying all installed packages...");
         @data = $pm->query_list_installed_pkgs();
         OSCAR::Utils::print_array (@data);
     } else {
