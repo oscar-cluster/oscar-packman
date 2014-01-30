@@ -1,3 +1,9 @@
+packman (3.2.3-1) lucid; urgency=low
+
+  * New upstream version.
+
+ -- Olivier Lahaye <olivier.lahaye1@free.fr>  Thu, 30 Jan 2014 16:05:21 +0100
+
 packman (3.2.2-1) lucid; urgency=low
 
   * New upstream version.

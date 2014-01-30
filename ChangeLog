@@ -1,3 +1,8 @@
+packman-3.2.3:
+- Migrated to new OSCAR::Logger::oscar_log
+- Added debug option
+- Fixed debian packaging warnings.
+
 packman-3.2.2:
 - Moved modules to %{perl_vendorlib}
 - Fixed so called ugly hack in PackMan.pm (now useless)
