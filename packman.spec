@@ -139,7 +139,7 @@ interface.
 - add debugging information for the Debian part of packman.
 * Sun Jul 16 2006 Geoffroy Vallee <valleegr@ornl.gov>
 - change the order of preferences for the backends. It is now (DEB, RPM).
-* Tue May 08 2006 Erich Focht
+* Mon May 08 2006 Erich Focht
 - added DEB.pm
 * Mon Apr 10 2006 Erich Focht
 - added repo_export and repo_unexport methods.
@@ -160,7 +160,7 @@ there is no need for checks for distro release files.
 - release 4, bug fixes and moved to site_perl
 * Mon Apr 12 2004 Mat Garrett <magarret@OSL.IU.edu>
 - release 3, more bug fixes
-* Wed Apr 06 2004 Mat Garrett <magarret@OSL.IU.edu>
+* Tue Apr 06 2004 Mat Garrett <magarret@OSL.IU.edu>
 - release 2, bug fixes
 * Tue Mar 30 2004 Mat Garrett <magarret@OSL.IU.edu>
 - v1.3, First spec file. (Thanks, Dave!)
