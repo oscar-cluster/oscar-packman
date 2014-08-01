@@ -1,3 +1,10 @@
+packman (3.3.0-1) lucid; urgency=low
+
+  * Adapt to new oscarsamples directory structure.
+  * Now has a clean image bootstrapping mechanism.
+
+ -- Olivier Lahaye <olivier.lahaye1@free.fr>  Thu, 30 Jan 2014 16:05:21 +0100
+
 packman (3.2.3-1) lucid; urgency=low
 
   * New upstream version.

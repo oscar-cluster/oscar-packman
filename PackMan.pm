@@ -15,6 +15,7 @@ use Carp;
 use File::Spec;
 use Data::Dumper;
 use POSIX;
+use File::Path;
 
 use OSCAR::PackManDefs;
 use OSCAR::OCA::OS_Detect;
@@ -25,6 +26,9 @@ use OSCAR::Utils;
 use OSCAR::Env;
 use OSCAR::Logger;
 use OSCAR::LoggerDefs;
+use v5.10.1; # Given/When
+# Avoid smartmatch warnings when using given
+no if $] >= 5.017011, warnings => 'experimental::smartmatch';
 
 our $VERSION;
 $VERSION = "r" . q$Rev$ =~ /(\d+)/;
@@ -562,6 +566,176 @@ sub update ($@) {
     return ($self->do_simple_command ('update', @_));
 }
 
+# Command the smart package manager to bootstrap the image dir if we are
+# in a chrooted environment (otherwize, do nothing).
+# Smart bootstrap should allways run in aggregated mode.
+#
+# Input: $self
+#        $phase : ("bootstrap" or "cleanup")
+# Return: (PM_SUCCESS or PM_ERROR, "error message")
+sub smart_image_bootstrap($$) {
+    ref (my $self = shift)
+        or (oscar_log(1, ERROR, "smart_install is an instance method"),
+            return (PM_ERROR, "smart_install is an instance method"));
+
+    my $phase = shift; # "bootstrap" or "cleanup"
+    my ($err, @output, $line, $cmd);
+
+    # No bootstrapping if not a chrooted environment (not an image directory)
+    return (PM_SUCCESS) if(! defined($self->{ChRoot}));
+    
+    # Create the image directory if it doesn't exists (and at image bootstrap phase).
+    File::Path::mkpath ($self->{ChRoot}) if((! -d $self->{ChRoot}) && ($phase eq "bootstrap"));
+
+    # Get the bootstrapping phase specific instructions for this distro.
+    my $bootstrap_instructions = $self->get_distro_sample_file("img_bootstrap", $phase);
+
+    my @bind;   # List of mount point to mount -o bind in image
+    my @del;    # List of files to delete.
+    my @mkdir;  # List of Paths to create.
+    my @pkgs;   # List of packages to install.
+    my @post;   # List of post bootstrap script to execute.
+    my @pre;    # List of pre bootstrap scripts to execute.
+    my @unbind; # List of mountpoints to unmount from image.
+
+    open(BOOTSTRAP, $bootstrap_instructions)
+        || (oscar_log(1, ERROR, "Could not open file $bootstrap_instructions"), return(PM_ERROR));
+    while ($line = <BOOTSTRAP>) {
+        next if (!OSCAR::Utils::is_a_valid_string ($line));
+        $line =~ s/\s+#.*$//; # remove comments
+        $line = OSCAR::Utils::trim ($line);
+        next if ($line eq "");
+
+        # Now parse the line.
+        my @arguments = split(/\s+/, $line);
+        my $command = shift(@arguments);
+
+        given ($command) {
+            when ("bind") { # Mount a filesystem from host in the image
+                if (! -d $arguments[0]) {
+                    oscar_log(1, ERROR, "Can't mount $arguments[0] into image: No such directory.");
+                    close (BOOTSTRAP);
+                    return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+                }
+                my $mnt_point = $arguments[0];
+                push (@mkdir, $mnt_point)
+                    if (! -d $self->{ChRoot}.$arguments[0]); # Will need to create this mountpoint in image.
+                push (@bind, $mnt_point);
+            }
+            when ("del") { # Remove files from image.
+                push (@del, @arguments);
+            }
+            when ("mkpath") { # Supports multiple path to create at once.
+                push (@mkdir, @arguments);
+            }
+            when ("pkgs") {
+                push (@pkgs, @arguments);
+            }
+            when ("post") {
+                push (@post, @arguments);
+            }
+            when ("pre") {
+                push (@pre, @arguments);
+            }
+            when ("unbind") { # Unmount a filesystem relative to the image path.
+                if (! -d $self->{ChRoot}.$arguments[0]) {
+                    oscar_log(1, ERROR, "Can't unmount $arguments[0] from image: No such directory.");
+                    close (BOOTSTRAP);
+                    return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+                }
+                push (@unbind, $arguments[0]);
+            }
+            default {
+                oscar_log(1, ERROR, "Unknown instruction'$command' in $bootstrap_instructions");
+                close (BOOTSTRAP);
+                return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+            }
+        }
+    }
+    close (BOOTSTRAP);
+
+    # Parsing finished, now, it's time for action.
+
+    # Scripts dir (if no absolute PATH)
+    my $scripts_path;
+    if (defined $ENV{OSCAR_HOME}) {
+        $scripts_path = "$ENV{OSCAR_HOME}/oscarsamples/img_bootstrap/";
+    } else {
+        $scripts_path = "/usr/share/oscar/oscarsamples/img_bootstrap/";
+    }
+
+    # 1: pre
+    for my $script (@pre) {
+        $script = $scripts_path.$script if ($script =~ /^\//);
+        if(oscar_system($script)) {
+            oscar_log(1, ERROR, "Failed to run pre($script)");
+            return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+        }
+    }
+
+    # 2: mkpath
+    my @dirs = map { $self->{ChRoot}.$_ } @mkdir;
+    File::Path::make_path(@dirs, { verbose => 1, error => \my $mkperr }); # FIXME: do not hardcode verbose.
+    if (@$mkperr) {
+        for my $diag (@$mkperr) {
+             my ($delfile, $delmessage) = %$diag;
+             if ($delfile eq '') {
+                  oscar_log(1, ERROR, "Failed to create path: $delmessage");
+                  return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+             } else {
+                  oscar_log(1, ERROR, "Failed to create path: $delfile: $delmessage");
+                  return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+             }
+        }
+    }
+
+    # 3: del
+    $cmd = "rm -rf ".join(" ",map { $self->{ChRoot}.$_ } @del);
+    oscar_log(5, INFO, "Deleting ".join(" ",@del)." from imagedir $self->{ChRoot}");
+    if(oscar_system($cmd)) {
+        oscar_log(1, ERROR, "Failed to delete ".join(" ",@del)." from image $self->{ChRoot}");
+        return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+    }
+
+    # 4: Mount bind
+    for my $mpt (@bind) {
+        $cmd = "mount -o bind ".$mpt." ".$self->{ChRoot}.$mpt;
+        oscar_log(5, INFO, "Mounting $mpt into image $self->{ChRoot}");
+        if(oscar_system($cmd)) {
+            oscar_log(1, ERROR, "Failed to mount $mpt into imagedir $self->{ChRoot}");
+            return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+        }
+    }
+
+    # 5: unbind
+    for my $umpt (@unbind) {
+        $cmd = "umount ".$self->{ChRoot}.$umpt;
+        oscar_log(5, INFO, "Unmounting $umpt from imagedir $self->{ChRoot}");
+        if(oscar_system($cmd)) {
+            oscar_log(1, ERROR, "Failed to unmount $umpt from image $self->{ChRoot}");
+            return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+        }
+    }
+
+    # 6: pkgs (install)
+    ($err, @output) = $self->do_simple_command ('smart_install', @pkgs);
+    if($err) {
+        oscar_log(1, ERROR, "Failed to install the following pkgs into image $self->{ChRoot}:\n".join(" ",@pkgs));
+        return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+    }
+
+    # 7: post
+    for my $script (@post) {
+        $script = $scripts_path.$script if ($script =~ /^\//);
+        if(oscar_system($script)) {
+            oscar_log(1, ERROR, "Failed to run post($script)");
+            return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+        }
+    }
+
+    return(PM_SUCCESS);
+}
+
 # Command the underlying package manager to remove each of the packages in the
 # argument list. Returns a failure value if any of the operations fails. In
 # non-aggregated mode, all packages which can be removed are guaranteed to be
@@ -579,6 +753,47 @@ sub update ($@) {
 # }
 # 
 
+# Function to get the full pathname of an oscarsample file given its category and file extension
+# category is the name of oscarsample sub directory to search into. e.g.: pkgfiles
+# get_distro_sample_file should allways run in aggregated mode.
+sub get_distro_sample_file($$$) {
+    ref (my $self = shift) 
+        or (oscar_log(1, ERROR, "get_distro_sample_file is an instance method"), return undef);
+    my ($category, $extension) = @_;
+
+    my $file;
+    if (defined $ENV{OSCAR_HOME}) {
+        $file = "$ENV{OSCAR_HOME}/oscarsamples/$category";
+    } else {
+        $file = "/usr/share/oscar/oscarsamples/$category";
+    }
+
+    my ($dist, $ver, $arch) = OSCAR::PackagePath::decompose_distro_id ($self->{Distro});
+    my $os = OSCAR::OCA::OS_Detect::open (fake=>{ distro=>$dist,
+                                                  distro_version=>$ver,
+                                                  arch=>$arch});
+    if (!defined ($os)) {
+        oscar_log(1, ERROR, "Impossible to detect the distro ($self->{Distro})");
+        return undef;
+    }
+
+    my $distro = "$dist-$ver-$arch";
+    my $compat_distro = "$os->{compat_distro}-$os->{compat_distrover}-$arch";
+    oscar_log(5, INFO, "Checking config file in $file...");
+    if ( -f "$file/$distro.$extension" ) {
+        $file .= "/$distro.$extension";
+    } elsif ( -f "$file/$compat_distro.$extension" ) {
+        $file .= "/$compat_distro.$extension";
+    } else {
+        oscar_log(1, ERROR, "Impossible to open the file $distro.$extension or $compat_distro.$extension" .
+                          "($distro, $compat_distro)");
+        return undef;
+    }
+    oscar_log(5, INFO, "Selected config file: $file");
+
+    return($file);
+}
+
 # Command the smart package manager to install each of the package files
 # in the argument list and resolve dependencies automatically.
 # Smart installs should allways run in aggregated mode.
@@ -594,73 +809,67 @@ sub smart_install ($@) {
     if ((scalar @pkgs) == 0) {
         return (PM_SUCCESS, "smart_install successful");
     }
-    my ($err, @output, $line);
-    # If the image does not exist for a given RPM based image, we need to
-    # bootstrap the image. For Debian system, RAPT deals with it.
-    if ($self->{Format} eq "RPM" && defined ($self->{ChRoot}) 
-                                 && (! -d $self->{ChRoot})) {
-        oscar_log(1, INFO, "Bootstrapping the image...");
-        
-        # If this is an RPM based image, we need the following directory to
-        # avoid error messages everytime we try to install a package.
-        require File::Path;
-        File::Path::mkpath ($self->{ChRoot}."/var/lib/yum");
-        my $filerpmlist;
-        if (defined $ENV{OSCAR_HOME}) {
-            $filerpmlist = "$ENV{OSCAR_HOME}/oscarsamples";
-        } else {
-            $filerpmlist = "/usr/share/oscar/oscarsamples";
-        }
-        my ($dist, $ver, $arch)
-            = OSCAR::PackagePath::decompose_distro_id ($self->{Distro});
-        my $os = OSCAR::OCA::OS_Detect::open (fake=>{ distro=>$dist,
-                                                  distro_version=>$ver,
-                                                  arch=>$arch});
-        if (!defined ($os)) {
-            return (PM_ERROR, "ERROR: Impossible to detect the distro ".
-                           "($self->{Distro})");
-        }
-        # TODO: Note that this is actually a problem because we do not allow
-        # users to overwrite the file with the list of binary packages.
-        my $distro = "$dist-$ver-$arch";
-        my $compat_distro = "$os->{compat_distro}-$os->{compat_distrover}-$arch";
-        oscar_log(1, INFO, "Checking config file in $filerpmlist...");
-        if ( -f "$filerpmlist/$distro.rpmlist" ) {
-            $filerpmlist .= "/$distro.rpmlist";
-        } elsif ( -f "$filerpmlist/$compat_distro.rpmlist" ) {
-            $filerpmlist .= "/$compat_distro.rpmlist";
-        } else {
-            return (PM_ERROR, "Impossible to open the file with the list ".
-                           "of binary packages for image bootstrapping ".
-                           "($distro, $compat_distro)");
-        }
-        oscar_log(1, INFO, "Selected config file: $filerpmlist");
-        open(DAT, $filerpmlist)
-            || (return(PM_ERROR, "Could not open file $filerpmlist"));
-        while ($line = <DAT>) {
-            next if (!OSCAR::Utils::is_a_valid_string ($line));
-            $line = OSCAR::Utils::trim ($line);
-            next if ($line =~ /^#/);
-            ($err, @output) = $self->do_simple_command ('smart_install',
-                              $line);
-            if ($err == PM_ERROR) {
-                oscar_log(1, ERROR, "Unable to install $line");
-            }
-        }
-        close (DAT);
+    my ($err, @output, $msg);
+
+    # 1st, we need to bootstrap the image.
+    ($err, $msg) = $self->smart_image_bootstrap("bootstrap");
+
+    # If bootstrapping of the image fails, no need to continue.
+    if (defined ($err) && $err) {
+        return ($err, $msg);
     }
 
-    # Now that the image is bootstrapped, we can actually install the packages.
+
+#    my ($err, @output, $line);
+#    # If the image does not exist for a given RPM based image, we need to
+#    # bootstrap the image. For Debian system, RAPT deals with it.
+#    if ($self->{Format} eq "RPM" && defined ($self->{ChRoot}) 
+#                                 && (! -d $self->{ChRoot})) {
+#        oscar_log(1, INFO, "Bootstrapping the image...");
+#        
+#        # If this is an RPM based image, we need the following directory to
+#        # avoid error messages everytime we try to install a package.
+#        File::Path::mkpath ($self->{ChRoot}."/var/lib/yum");
+#        my $filerpmlist = $self->get_distro_sample_file("pkglists", "pkglist");
+#
+#        open(DAT, $filerpmlist)
+#            || (return(PM_ERROR, "Could not open file $filerpmlist"));
+#        while ($line = <DAT>) {
+#            next if (!OSCAR::Utils::is_a_valid_string ($line));
+#            $line = OSCAR::Utils::trim ($line);
+#            next if ($line =~ /^#/);
+#            ($err, @output) = $self->do_simple_command ('smart_install',
+#                              $line);
+#            if ($err == PM_ERROR) {
+#                oscar_log(1, ERROR, "Unable to install $line");
+#            }
+#        }
+#        close (DAT);
+#    }
+#
+
+
+    # 2nd, Now that the image is bootstrapped, we can actually install the packages.
     ($err, @output) = $self->do_simple_command ('smart_install', @pkgs);
 
     if (defined ($err) && $err) {
+        # If we failed in installing packages, we still need to cleanup at least binded mountpoints.
+        ($err, $msg) = $self->smart_image_bootstrap("cleanup"); # Don't care for success here (already in failed state)
         if (scalar (@output) == 0) {
             return (PM_ERROR, "No error message");
         } else {
             return (PM_ERROR, join("\n", @output));
         }
     }
-    return (PM_SUCCESS, "Install succeeded");
+
+    # 3rd, we need to cleanup the image. (unmount some binded filesystems, remove some garbage, ...)
+    ($err, $msg) = $self->smart_image_bootstrap("cleanup");
+    if (defined ($err) && $err) {
+        return (PM_ERROR, $err);
+    }
+
+    # 4th, Finished, we return SUCCESS.
+    return (PM_SUCCESS, "Install succeeded.");
 }
 
 # Command the smart package manager to remove each of the package files
