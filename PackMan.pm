@@ -579,10 +579,19 @@ sub smart_image_bootstrap($$) {
             return (PM_ERROR, "smart_install is an instance method"));
 
     my $phase = shift; # "bootstrap" or "cleanup"
+    if (($phase ne "bootstrap") and ($phase ne "cleanup")) {
+        oscar_log(1, ERROR, "smart_install API Error: wrong phase: $phase");
+        return (PM_ERROR, "smart_install API Error: wrong phase: $phase");
+    }
+
     my ($err, @output, $line, $cmd);
 
     # No bootstrapping if not a chrooted environment (not an image directory)
-    return (PM_SUCCESS) if((! defined($self->{ChRoot})) || ($self->{ChRoot} eq "/"));
+    # Also do nothing if already already bootstrapped.
+    return (PM_SUCCESS)
+        if((! defined($self->{ChRoot})) ||
+           ($self->{ChRoot} eq "/") ||
+           ($self->{$phase} == 1));
     
     # Create the image directory if it doesn't exists (and at image bootstrap phase).
     File::Path::mkpath ($self->{ChRoot}) if((! -d $self->{ChRoot}) && ($phase eq "bootstrap"));
@@ -595,19 +604,24 @@ sub smart_image_bootstrap($$) {
         return(PM_ERROR, "Image bootstrap: no support for this distro.");
     }
 
-    my @bind;   # List of mount point to mount -o bind in image
-    my @del;    # List of files to delete.
-    my @mkdir;  # List of Paths to create.
-    my @pkgs;   # List of packages to install.
-    my @post;   # List of post bootstrap script to execute.
-    my @pre;    # List of pre bootstrap scripts to execute.
-    my @unbind; # List of mountpoints to unmount from image.
+    my @bind   = (); # List of mount point to mount -o bind in image
+    my @del    = (); # List of files to delete.
+    my @mkdir  = (); # List of Paths to create.
+    my @pkgs   = (); # List of packages to install.
+    my @post   = (); # List of post bootstrap script to execute.
+    my @pre    = (); # List of pre bootstrap scripts to execute.
+    my @unbind = (); # List of mountpoints to unmount from image.
+
+    my $line_nb=0;
+
 
     open(BOOTSTRAP, $bootstrap_instructions)
-        || (oscar_log(1, ERROR, "Could not open file $bootstrap_instructions"), return(PM_ERROR,"Could not open file $bootstrap_instructions"));
+        || (oscar_log(1, ERROR, "Could not open file $bootstrap_instructions"),
+            return(PM_ERROR,"Could not open file $bootstrap_instructions"));
     while ($line = <BOOTSTRAP>) {
+        $line_nb++;
         next if (!OSCAR::Utils::is_a_valid_string ($line));
-        $line =~ s/\s+#.*$//; # remove comments
+        $line =~ s/\s*#.*$//; # remove comments
         $line = OSCAR::Utils::trim ($line);
         next if ($line eq "");
 
@@ -630,7 +644,7 @@ sub smart_image_bootstrap($$) {
             when ("del") { # Remove files from image.
                 push (@del, @arguments);
             }
-            when ("mkpath") { # Supports multiple path to create at once.
+            when ("path") { # Supports multiple path to create at once.
                 push (@mkdir, @arguments);
             }
             when ("pkgs") {
@@ -651,7 +665,7 @@ sub smart_image_bootstrap($$) {
                 push (@unbind, $arguments[0]);
             }
             default {
-                oscar_log(1, ERROR, "Unknown instruction'$command' in $bootstrap_instructions");
+                oscar_log(1, ERROR, "Unknown instruction'$command' in $bootstrap_instructions line: $line_nb");
                 close (BOOTSTRAP);
                 return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
             }
@@ -695,11 +709,13 @@ sub smart_image_bootstrap($$) {
     }
 
     # 3: del
-    $cmd = "rm -rf ".join(" ",map { $self->{ChRoot}.$_ } @del);
-    oscar_log(5, INFO, "Deleting ".join(" ",@del)." from imagedir $self->{ChRoot}");
-    if(oscar_system($cmd)) {
-        oscar_log(1, ERROR, "Failed to delete ".join(" ",@del)." from image $self->{ChRoot}");
-        return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+    if (@del) {
+        $cmd = "rm -rf ".join(" ",map { $self->{ChRoot}.$_ } @del);
+        oscar_log(5, INFO, "Deleting ".join(" ",@del)." from imagedir $self->{ChRoot}");
+        if(oscar_system($cmd)) {
+            oscar_log(1, ERROR, "Failed to delete ".join(" ",@del)." from image $self->{ChRoot}");
+            return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+        }
     }
 
     # 4: Mount bind
@@ -723,10 +739,12 @@ sub smart_image_bootstrap($$) {
     }
 
     # 6: pkgs (install)
-    ($err, @output) = $self->do_simple_command ('smart_install', @pkgs);
-    if($err) {
-        oscar_log(1, ERROR, "Failed to install the following pkgs into image $self->{ChRoot}:\n".join(" ",@pkgs));
-        return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+    if (@pkgs) {
+        ($err, @output) = $self->do_simple_command ('smart_install', @pkgs);
+        if($err) {
+            oscar_log(1, ERROR, "Failed to install the following pkgs into image $self->{ChRoot}:\n".join(" ",@pkgs));
+            return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+        }
     }
 
     # 7: post
@@ -737,6 +755,8 @@ sub smart_image_bootstrap($$) {
             return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
         }
     }
+
+    $self->{$phase} = 1;
 
     return(PM_SUCCESS);
 }
