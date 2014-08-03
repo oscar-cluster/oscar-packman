@@ -582,13 +582,18 @@ sub smart_image_bootstrap($$) {
     my ($err, @output, $line, $cmd);
 
     # No bootstrapping if not a chrooted environment (not an image directory)
-    return (PM_SUCCESS) if(! defined($self->{ChRoot}));
+    return (PM_SUCCESS) if((! defined($self->{ChRoot})) || ($self->{ChRoot} eq "/"));
     
     # Create the image directory if it doesn't exists (and at image bootstrap phase).
     File::Path::mkpath ($self->{ChRoot}) if((! -d $self->{ChRoot}) && ($phase eq "bootstrap"));
 
     # Get the bootstrapping phase specific instructions for this distro.
     my $bootstrap_instructions = $self->get_distro_sample_file("img_bootstrap", $phase);
+
+    if(! defined($bootstrap_instructions)) {
+        oscar_log(1, ERROR, "Image bootstrap: no support for this distro.");
+        return(PM_ERROR, "Image bootstrap: no support for this distro.");
+    }
 
     my @bind;   # List of mount point to mount -o bind in image
     my @del;    # List of files to delete.
@@ -599,7 +604,7 @@ sub smart_image_bootstrap($$) {
     my @unbind; # List of mountpoints to unmount from image.
 
     open(BOOTSTRAP, $bootstrap_instructions)
-        || (oscar_log(1, ERROR, "Could not open file $bootstrap_instructions"), return(PM_ERROR));
+        || (oscar_log(1, ERROR, "Could not open file $bootstrap_instructions"), return(PM_ERROR,"Could not open file $bootstrap_instructions"));
     while ($line = <BOOTSTRAP>) {
         next if (!OSCAR::Utils::is_a_valid_string ($line));
         $line =~ s/\s+#.*$//; # remove comments
