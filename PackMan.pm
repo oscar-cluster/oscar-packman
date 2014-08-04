@@ -16,6 +16,7 @@ use File::Spec;
 use Data::Dumper;
 use POSIX;
 use File::Path;
+use File::Copy::Recursive;
 
 use OSCAR::PackManDefs;
 use OSCAR::OCA::OS_Detect;
