@@ -608,6 +608,7 @@ sub smart_image_bootstrap($$) {
     my @bind   = (); # List of mount point to mount -o bind in image
     my @del    = (); # List of files to delete.
     my @mkdir  = (); # List of Paths to create.
+    my @copy   = (); # List of files to copy.
     my @pkgs   = (); # List of packages to install.
     my @post   = (); # List of post bootstrap script to execute.
     my @pre    = (); # List of pre bootstrap scripts to execute.
@@ -648,6 +649,9 @@ sub smart_image_bootstrap($$) {
             when ("path") { # Supports multiple path to create at once.
                 push (@mkdir, @arguments);
             }
+            when ("copy") { # Supports multiple files to copy at once.
+                push (@copy, @arguments);
+            }
             when ("pkgs") {
                 push (@pkgs, @arguments);
             }
@@ -676,6 +680,7 @@ sub smart_image_bootstrap($$) {
 
     # Parsing finished, now, it's time for action.
 
+    oscar_log(5, INFO, "Image bootstraping phase: $phase");
     # Scripts dir (if no absolute PATH)
     my $scripts_path;
     if (defined $ENV{OSCAR_HOME}) {
@@ -686,6 +691,7 @@ sub smart_image_bootstrap($$) {
 
     # 1: pre
     for my $script (@pre) {
+        oscar_log(5, INFO, "Running bootstrap pre-script: $script");
         $script = $scripts_path.$script if ($script =~ /^\//);
         if(oscar_system($script)) {
             oscar_log(1, ERROR, "Failed to run pre($script)");
@@ -694,18 +700,33 @@ sub smart_image_bootstrap($$) {
     }
 
     # 2: mkpath
-    my @dirs = map { $self->{ChRoot}.$_ } @mkdir;
-    File::Path::make_path(@dirs, { verbose => 1, error => \my $mkperr }); # FIXME: do not hardcode verbose.
-    if (@$mkperr) {
-        for my $diag (@$mkperr) {
-             my ($delfile, $delmessage) = %$diag;
-             if ($delfile eq '') {
-                  oscar_log(1, ERROR, "Failed to create path: $delmessage");
-                  return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
-             } else {
-                  oscar_log(1, ERROR, "Failed to create path: $delfile: $delmessage");
-                  return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
-             }
+    if (@dirs) {
+        my @dirs = map { $self->{ChRoot}.$_ } @mkdir;
+        oscar_log(5, INFO, "Creating some directories in the image:");
+        File::Path::make_path(@dirs, { verbose => 1, error => \my $mkperr }); # FIXME: do not hardcode verbose.
+        if (@$mkperr) {
+            for my $diag (@$mkperr) {
+                 my ($delfile, $delmessage) = %$diag;
+                 if ($delfile eq '') {
+                      oscar_log(1, ERROR, "Failed to create path: $delmessage");
+                      return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+                 } else {
+                      oscar_log(1, ERROR, "Failed to create path: $delfile: $delmessage");
+                      return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+                 }
+            }
+        }
+    }
+
+    if (@copy) {
+        my ($count, $dirs, $depth);
+        for my $file2copy (@copy) {
+            oscar_log(5, INFO, "Copying $file2copy into the image.");
+            ($count, $dirs, $depth) = File::Copy::Recursive::fcopy($file2copy, "$self->{ChRoot}/$file2copy");
+            if ($count != 1) {
+                oscar_log(1, ERROR, "Failed to copy $file2copy into the image.");
+                return(PM_ERROR, "Failed to copy $file2copy into the image.");
+            }
         }
     }
 
@@ -750,6 +771,7 @@ sub smart_image_bootstrap($$) {
 
     # 7: post
     for my $script (@post) {
+        oscar_log(5, INFO, "Running bootstrap post-script: $script");
         $script = $scripts_path.$script if ($script =~ /^\//);
         if(oscar_system($script)) {
             oscar_log(1, ERROR, "Failed to run post($script)");
