@@ -700,7 +700,7 @@ sub smart_image_bootstrap($$) {
     }
 
     # 2: mkpath
-    if (@dirs) {
+    if (@mkdir) {
         my @dirs = map { $self->{ChRoot}.$_ } @mkdir;
         oscar_log(5, INFO, "Creating some directories in the image:");
         File::Path::make_path(@dirs, { verbose => 1, error => \my $mkperr }); # FIXME: do not hardcode verbose.
