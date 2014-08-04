@@ -39,7 +39,7 @@ use base qw(OSCAR::PackMan);
 # boilerplate constructor because PackMan's is "abstract"
 sub new {
   ref (my $class = shift) and croak ("constructor called on instance");
-  my $new  = { ChRoot => shift, Format => "DEB", Distro => undef };
+  my $new  = { ChRoot => shift, Format => "DEB", Distro => undef, Bootstrap => "" };
   bless ($new, $class);
   return ($new);
 }

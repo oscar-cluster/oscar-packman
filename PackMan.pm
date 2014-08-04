@@ -575,13 +575,13 @@ sub update ($@) {
 # Return: (PM_SUCCESS or PM_ERROR, "error message")
 sub smart_image_bootstrap($$) {
     ref (my $self = shift)
-        or (oscar_log(1, ERROR, "smart_install is an instance method"),
-            return (PM_ERROR, "smart_install is an instance method"));
+        or (oscar_log(1, ERROR, "smart_image_bootstrap is an instance method"),
+            return (PM_ERROR, "smart_image_bootstrap is an instance method"));
 
     my $phase = shift; # "bootstrap" or "cleanup"
     if (($phase ne "bootstrap") and ($phase ne "cleanup")) {
-        oscar_log(1, ERROR, "smart_install API Error: wrong phase: $phase");
-        return (PM_ERROR, "smart_install API Error: wrong phase: $phase");
+        oscar_log(1, ERROR, "smart_image_bootstrap API Error: wrong phase: $phase");
+        return (PM_ERROR, "smart_image_bootstrap API Error: wrong phase: $phase");
     }
 
     my ($err, @output, $line, $cmd);
@@ -591,7 +591,8 @@ sub smart_image_bootstrap($$) {
     return (PM_SUCCESS)
         if((! defined($self->{ChRoot})) ||
            ($self->{ChRoot} eq "/") ||
-           ($self->{$phase} == 1));
+           ($self->{Bootstrap} eq $phase) ||
+           ( -f $self->{ChRoot}/etc/bootstrap_infos.txt));
     
     # Create the image directory if it doesn't exists (and at image bootstrap phase).
     File::Path::mkpath ($self->{ChRoot}) if((! -d $self->{ChRoot}) && ($phase eq "bootstrap"));
@@ -756,8 +757,18 @@ sub smart_image_bootstrap($$) {
         }
     }
 
-    $self->{$phase} = 1;
+    $self->{Bootstrap} = $phase;
 
+    # If cleanup successfull, put a stamp in the image.
+    if ($phase == "cleanup") {
+        open BS_INFOS, ">$self->{ChRoot}/etc/bootstrap_infos.txt"
+            || oscar_log(1, WARNING, "Could not create $self->{ChRoot}/etc/bootstrap_infos.txt");
+        print BS_INFO <<EOF;
+This image has been successfully bootstrapped for the following OS:
+$self->{Distro}.
+EOF
+        close BS_INFO;
+    }
     return(PM_SUCCESS);
 }
 
@@ -780,11 +791,17 @@ sub smart_image_bootstrap($$) {
 
 # Function to get the full pathname of an oscarsample file given its category and file extension
 # category is the name of oscarsample sub directory to search into. e.g.: pkgfiles
+# 1st try to return the "distro" file, and if not found, the compat-distro file.
 # get_distro_sample_file should allways run in aggregated mode.
 sub get_distro_sample_file($$$) {
     ref (my $self = shift) 
         or (oscar_log(1, ERROR, "get_distro_sample_file is an instance method"), return undef);
     my ($category, $extension) = @_;
+
+    if (! defined($self->{Distro})) {
+        oscar_log(1, ERROR, "Distro not defined. Can't find appropriate config file");
+        return undef;
+    }
 
     my $file;
     if (defined $ENV{OSCAR_HOME}) {
@@ -793,6 +810,13 @@ sub get_distro_sample_file($$$) {
         $file = "/usr/share/oscar/oscarsamples/$category";
     }
 
+    # 1st: check if distro file exists.
+    if (-f "$file/$self->{Distro}.$extension") {
+        oscar_log(5, INFO, "Selected config file: $file/$self->{Distro}.$extension");
+        return ("$file/$self->{Distro}.$extension");
+    }
+
+    #2nd: distro file not found, we try to check for distro-compat file.
     my ($dist, $ver, $arch) = OSCAR::PackagePath::decompose_distro_id ($self->{Distro});
     my $os = OSCAR::OCA::OS_Detect::open (fake=>{ distro=>$dist,
                                                   distro_version=>$ver,
@@ -802,16 +826,11 @@ sub get_distro_sample_file($$$) {
         return undef;
     }
 
-    my $distro = "$dist-$ver-$arch";
     my $compat_distro = "$os->{compat_distro}-$os->{compat_distrover}-$arch";
-    oscar_log(5, INFO, "Checking config file in $file...");
-    if ( -f "$file/$distro.$extension" ) {
-        $file .= "/$distro.$extension";
-    } elsif ( -f "$file/$compat_distro.$extension" ) {
+    if ( -f "$file/$compat_distro.$extension" ) {
         $file .= "/$compat_distro.$extension";
     } else {
-        oscar_log(1, ERROR, "Impossible to open the file $distro.$extension or $compat_distro.$extension" .
-                          "($distro, $compat_distro)");
+        oscar_log(1, ERROR, "Impossible to open the file $self->{Distro}.$extension or $compat_distro.$extension");
         return undef;
     }
     oscar_log(5, INFO, "Selected config file: $file");
