@@ -1,6 +1,6 @@
 packman-3.3.0:
 - Adapt to new oscarsamples directory structure.
-- Now has a clean image bootstrapping mechanisme.
+- Now has a clean image bootstrapping mechanism.
 
 packman-3.2.3:
 - Migrated to new OSCAR::Logger::oscar_log
