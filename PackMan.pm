@@ -592,7 +592,7 @@ sub smart_image_bootstrap($$) {
         if((! defined($self->{ChRoot})) ||
            ($self->{ChRoot} eq "/") ||
            ($self->{Bootstrap} eq $phase) ||
-           ( -f $self->{ChRoot}/etc/bootstrap_infos.txt));
+           ( -f "$self->{ChRoot}/etc/bootstrap_infos.txt"));
     
     # Create the image directory if it doesn't exists (and at image bootstrap phase).
     File::Path::mkpath ($self->{ChRoot}) if((! -d $self->{ChRoot}) && ($phase eq "bootstrap"));
@@ -761,13 +761,14 @@ sub smart_image_bootstrap($$) {
 
     # If cleanup successfull, put a stamp in the image.
     if ($phase == "cleanup") {
-        open BS_INFOS, ">$self->{ChRoot}/etc/bootstrap_infos.txt"
+        open BS_INFO, ">$self->{ChRoot}/etc/bootstrap_infos.txt"
             || oscar_log(1, WARNING, "Could not create $self->{ChRoot}/etc/bootstrap_infos.txt");
         print BS_INFO <<EOF;
 This image has been successfully bootstrapped for the following OS:
 $self->{Distro}.
 EOF
         close BS_INFO;
+        oscar_log(5, INFO, "Successfully bootstrapped image $self->{ChRoot}");
     }
     return(PM_SUCCESS);
 }
