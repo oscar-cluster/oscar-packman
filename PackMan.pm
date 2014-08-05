@@ -47,6 +47,8 @@ my %concrete;
 
 my $format;
 
+# Path to image being processed (needed for Int Handler).
+our $img_path = "/"; # Default value.
 
 # Preloaded methods go here.
 BEGIN {
@@ -700,21 +702,28 @@ sub smart_image_bootstrap($$) {
             push(@binddirs, $self->{ChRoot}.$mpt); # This mount points needs to be created.
         }
     }
-    oscar_log(5, INFO, "Creating mount points in the image:");
-    File::Path::make_path(@binddirs, { verbose => 1, error => \my $mkmnterr }); # FIXME: do not hardcode verbose.
-    if (@$mkmnterr) {
-        for my $diag (@$mkmnterr) {
-             my ($delfile, $delmessage) = %$diag;
-             if ($delfile eq '') {
-                 oscar_log(1, ERROR, "Failed to create path: $delmessage");
-                 return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
-             } else {
-                 oscar_log(1, ERROR, "Failed to create path: $delfile: $delmessage");
-                 return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
-             }
+    if(@binddirs) {
+        oscar_log(5, INFO, "Creating mount points in the image:");
+        File::Path::make_path(@binddirs, { verbose => 1, error => \my $mkmnterr }); # FIXME: do not hardcode verbose.
+        if (@$mkmnterr) {
+            for my $diag (@$mkmnterr) {
+                 my ($delfile, $delmessage) = %$diag;
+                 if ($delfile eq '') {
+                     oscar_log(1, ERROR, "Failed to create path: $delmessage");
+                     return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+                 } else {
+                     oscar_log(1, ERROR, "Failed to create path: $delfile: $delmessage");
+                     return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+                 }
+            }
         }
     }
     for my $mpt (@bind) {
+        $img_path = $self->{ChRoot}; # Keep track of current image for SigHandler.
+        $SIG{INT}  = \&SigHandler; # Catch signals so we can unmount garbage.
+        $SIG{QUIT} = \&SigHandler;
+        $SIG{TERM} = \&SigHandler;
+        $SIG{KILL} = \&SigHandler;
         $cmd = "mount -o bind ".$mpt." ".$self->{ChRoot}.$mpt;
         oscar_log(5, INFO, "Mounting $mpt into image $self->{ChRoot}");
         if(oscar_system($cmd)) {
@@ -823,6 +832,11 @@ EOF
             oscar_log(1, ERROR, "Failed to unmount $umpt from image $self->{ChRoot}");
             return(PM_ERROR, "Failed to unmount $umpt from image: $self->{ChRoot}");
         }
+        $SIG{INT}  = 'DEFAULT'; # Reset signal handler
+        $SIG{QUIT} = 'DEFAULT';
+        $SIG{TERM} = 'DEFAULT';
+        $SIG{KILL} = 'DEFAULT';
+        $img_path = "/"; # Reset current image path.
     }
 
     return(PM_SUCCESS);
@@ -1559,6 +1573,27 @@ sub list_exported {
 sub restart_httpd {
     !system_service(HTTP(),RESTART())
         or ( oscar_log(1, ERROR, "Couldn't restart http service."), return -1);
+}
+
+sub SigHandler {
+    my $signal=@_;
+    carp("Caught signal $signal");
+
+    # Try to unmount mounted stuffs in current image path.
+    chdir("/tmp"); # Try to move outside the image path (just in case).
+    my $cmd = "";
+    if(defined($img_path) && ($img_path ne "/") && (-d $img_path)) {
+        open(MOUNTS, "< /proc/mounts")
+            or die "cannot open /proc/mounts: $!";
+        while (my $line = <MOUNTS>) {
+            if ($line =~ /^\S+\s+(\Q$img_path\E)\s+.*$/) {
+                print "Unmounting $1\n";
+                $cmd = "umount $1";
+                oscar_system($cmd);
+            }
+        }
+    }
+    exit 0;
 }
 
 1;
