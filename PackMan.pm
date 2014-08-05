@@ -783,7 +783,7 @@ sub smart_image_bootstrap($$) {
     $self->{Bootstrap} = $phase;
 
     # If cleanup successfull, put a stamp in the image.
-    if ($phase == "cleanup") {
+    if ($phase eq "cleanup") {
         open BS_INFO, ">$self->{ChRoot}/etc/bootstrap_infos.txt"
             || oscar_log(1, WARNING, "Could not create $self->{ChRoot}/etc/bootstrap_infos.txt");
         print BS_INFO <<EOF;
