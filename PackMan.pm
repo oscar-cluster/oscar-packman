@@ -450,7 +450,7 @@ sub do_simple_command {
     my $rr = 0;
     if ($aggregatable) {
         splice(@captured_output);
-        # need to put all packages into quotes (support for perl(Pod::Man)).
+        # need to put all packages into quotes (support for perl(Pod::Man)).
         @lov = map { "'$_'" } @lov;
         my $all_args = join " ", @lov;
         $cl =~ s/#args/$all_args/g;
@@ -642,8 +642,6 @@ sub smart_image_bootstrap($$) {
                     return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
                 }
                 my $mnt_point = $arguments[0];
-                push (@mkdir, $mnt_point)
-                    if (! -d $self->{ChRoot}.$arguments[0]); # Will need to create this mountpoint in image.
                 push (@bind, $mnt_point);
             }
             when ("del") { # Remove files from image.
@@ -696,6 +694,26 @@ sub smart_image_bootstrap($$) {
     }
 
     # 0: Mount bind (always executed)
+    my @binddirs = ();
+    for my $mpt (@bind) {
+        if (! -d $self->{ChRoot}.$mpt) { # Need to create mount point
+            push(@binddirs, $self->{ChRoot}.$mpt); # This mount points needs to be created.
+        }
+    }
+    oscar_log(5, INFO, "Creating mount points in the image:");
+    File::Path::make_path(@binddirs, { verbose => 1, error => \my $mkmnterr }); # FIXME: do not hardcode verbose.
+    if (@$mkmnterr) {
+        for my $diag (@$mkmnterr) {
+             my ($delfile, $delmessage) = %$diag;
+             if ($delfile eq '') {
+                 oscar_log(1, ERROR, "Failed to create path: $delmessage");
+                 return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+             } else {
+                 oscar_log(1, ERROR, "Failed to create path: $delfile: $delmessage");
+                 return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+             }
+        }
+    }
     for my $mpt (@bind) {
         $cmd = "mount -o bind ".$mpt." ".$self->{ChRoot}.$mpt;
         oscar_log(5, INFO, "Mounting $mpt into image $self->{ChRoot}");
@@ -707,7 +725,7 @@ sub smart_image_bootstrap($$) {
 
     # The following commands are only executed if ran for the 1st time in this image.
     # pre - pkpath - copy - del -pkgs - post
-    if ( ! -f "$self->{ChRoot}/etc/bootstrap_infos.txt") { # Image has never been bootstrapped.
+    if ( ! -f "$self->{ChRoot}/etc/bootstrap_infos.txt") { # Image has never been bootstrapped.
         # 1: pre
         for my $script (@pre) {
             oscar_log(5, INFO, "Running bootstrap pre-script: $script");
@@ -762,6 +780,7 @@ sub smart_image_bootstrap($$) {
 
         # 5: pkgs (install)
         if (@pkgs) {
+            oscar_log(5, INFO, "Installing ".join(' ,',@pkgs)." into $self->{ChRoot}");
             ($err, @output) = $self->do_simple_command ('smart_install', @pkgs);
             if($err) {
                 oscar_log(1, ERROR, "Failed to install the following pkgs into image $self->{ChRoot}:\n".join(" ",@pkgs));
@@ -779,8 +798,9 @@ sub smart_image_bootstrap($$) {
             }
         }
 
-        # If cleanup successfull, put a stamp in the image.
+        # If cleanup successfull, put a stamp in the image.
         if ($phase eq "cleanup") {
+            oscar_log(5, INFO, "Writing bootstrap stamp (/etc/bootstrap_infos.txt) into the image");
             open BS_INFO, ">$self->{ChRoot}/etc/bootstrap_infos.txt"
                 || oscar_log(1, WARNING, "Could not create $self->{ChRoot}/etc/bootstrap_infos.txt");
             print BS_INFO <<EOF;
@@ -791,7 +811,7 @@ EOF
             oscar_log(5, INFO, "Successfully bootstrapped image $self->{ChRoot}");
         }
 
-    } # End of section that is ran only once per image (real bootstrap)
+    } # End of section that is ran only once per image (real bootstrap)
 
     $self->{Bootstrap} = $phase;
 
@@ -846,7 +866,7 @@ sub get_distro_sample_file($$$) {
         $file = "/usr/share/oscar/oscarsamples/$category";
     }
 
-    # 1st: check if distro file exists.
+    # 1st: check if distro file exists.
     if (-f "$file/$self->{Distro}.$extension") {
         oscar_log(5, INFO, "Selected config file: $file/$self->{Distro}.$extension");
         return ("$file/$self->{Distro}.$extension");

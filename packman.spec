@@ -12,7 +12,7 @@ Source:			%{name}.tar.gz
 BuildRoot: 		%{_localstatedir}/%{name}-root
 BuildArch:		noarch
 # createrepo used by yume --prepare. dep is here because yume doesn't have this requirement
-# indeed, yume on nodes don't need --prepare associated requirements.
+# indeed, yume on nodes don't need --prepare associated requirements.
 Requires:       	oscar-base-lib, yume >= 2.8.2, createrepo
 
 %description
