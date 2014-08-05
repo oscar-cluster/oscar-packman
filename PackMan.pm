@@ -568,11 +568,17 @@ sub update ($@) {
 }
 
 # Command the smart package manager to bootstrap the image dir if we are
-# in a chrooted environment (otherwize, do nothing).
+# in a chrooted environment.
+# At 1st time it is called, it will honor all the bootstrap commands.
+# If it is ran later, it will only to mount and unmount to help the package
+# being installed to run post scripts with less problem.
+#
 # Smart bootstrap should allways run in aggregated mode.
 #
 # Input: $self
 #        $phase : ("bootstrap" or "cleanup")
+#        bootstrap: called before installing package(s).
+#        cleanup: called after installing package(s).
 # Return: (PM_SUCCESS or PM_ERROR, "error message")
 sub smart_image_bootstrap($$) {
     ref (my $self = shift)
@@ -588,16 +594,12 @@ sub smart_image_bootstrap($$) {
     my ($err, @output, $line, $cmd);
 
     # No bootstrapping if not a chrooted environment (not an image directory)
-    # Also do nothing if already already bootstrapped.
+    # or if already in the current phase (API problem)
     return (PM_SUCCESS)
         if((! defined($self->{ChRoot})) ||
            ($self->{ChRoot} eq "/") ||
-           ($self->{Bootstrap} eq $phase) ||
-           ( -f "$self->{ChRoot}/etc/bootstrap_infos.txt"));
+           ($self->{Bootstrap} eq $phase));
     
-    # Create the image directory if it doesn't exists (and at image bootstrap phase).
-    File::Path::mkpath ($self->{ChRoot}) if((! -d $self->{ChRoot}) && ($phase eq "bootstrap"));
-
     # Get the bootstrapping phase specific instructions for this distro.
     my $bootstrap_instructions = $self->get_distro_sample_file("img_bootstrap", $phase);
 
@@ -606,14 +608,14 @@ sub smart_image_bootstrap($$) {
         return(PM_ERROR, "Image bootstrap: no support for this distro.");
     }
 
-    my @bind   = (); # List of mount point to mount -o bind in image
-    my @del    = (); # List of files to delete.
+    my @pre    = (); # List of pre bootstrap scripts to execute.
     my @mkdir  = (); # List of Paths to create.
     my @copy   = (); # List of files to copy.
+    my @del    = (); # List of files to delete.
+    my @bind   = (); # List of mount point to mount -o bind in image
     my @pkgs   = (); # List of packages to install.
-    my @post   = (); # List of post bootstrap script to execute.
-    my @pre    = (); # List of pre bootstrap scripts to execute.
     my @unbind = (); # List of mountpoints to unmount from image.
+    my @post   = (); # List of post bootstrap script to execute.
 
     my $line_nb=0;
 
@@ -681,6 +683,9 @@ sub smart_image_bootstrap($$) {
 
     # Parsing finished, now, it's time for action.
 
+    # Create the image directory if it doesn't exists (and at image bootstrap phase).
+    File::Path::mkpath ($self->{ChRoot}) if((! -d $self->{ChRoot}) && ($phase eq "bootstrap"));
+
     oscar_log(5, INFO, "Image bootstraping phase: $phase");
     # Scripts dir (if no absolute PATH)
     my $scripts_path;
@@ -690,58 +695,7 @@ sub smart_image_bootstrap($$) {
         $scripts_path = "/usr/share/oscar/oscarsamples/img_bootstrap/";
     }
 
-    # 1: pre
-    for my $script (@pre) {
-        oscar_log(5, INFO, "Running bootstrap pre-script: $script");
-        $script = $scripts_path.$script if ($script =~ /^\//);
-        if(oscar_system($script)) {
-            oscar_log(1, ERROR, "Failed to run pre($script)");
-            return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
-        }
-    }
-
-    # 2: mkpath
-    if (@mkdir) {
-        my @dirs = map { $self->{ChRoot}.$_ } @mkdir;
-        oscar_log(5, INFO, "Creating some directories in the image:");
-        File::Path::make_path(@dirs, { verbose => 1, error => \my $mkperr }); # FIXME: do not hardcode verbose.
-        if (@$mkperr) {
-            for my $diag (@$mkperr) {
-                 my ($delfile, $delmessage) = %$diag;
-                 if ($delfile eq '') {
-                      oscar_log(1, ERROR, "Failed to create path: $delmessage");
-                      return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
-                 } else {
-                      oscar_log(1, ERROR, "Failed to create path: $delfile: $delmessage");
-                      return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
-                 }
-            }
-        }
-    }
-
-    if (@copy) {
-        my ($count, $dirs, $depth);
-        for my $file2copy (@copy) {
-            oscar_log(5, INFO, "Copying $file2copy into the image.");
-            ($count, $dirs, $depth) = File::Copy::Recursive::fcopy($file2copy, "$self->{ChRoot}/$file2copy");
-            if ($count != 1) {
-                oscar_log(1, ERROR, "Failed to copy $file2copy into the image.");
-                return(PM_ERROR, "Failed to copy $file2copy into the image.");
-            }
-        }
-    }
-
-    # 3: del
-    if (@del) {
-        $cmd = "rm -rf ".join(" ",map { $self->{ChRoot}.$_ } @del);
-        oscar_log(5, INFO, "Deleting ".join(" ",@del)." from imagedir $self->{ChRoot}");
-        if(oscar_system($cmd)) {
-            oscar_log(1, ERROR, "Failed to delete ".join(" ",@del)." from image $self->{ChRoot}");
-            return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
-        }
-    }
-
-    # 4: Mount bind
+    # 0: Mount bind (always executed)
     for my $mpt (@bind) {
         $cmd = "mount -o bind ".$mpt." ".$self->{ChRoot}.$mpt;
         oscar_log(5, INFO, "Mounting $mpt into image $self->{ChRoot}");
@@ -751,48 +705,106 @@ sub smart_image_bootstrap($$) {
         }
     }
 
-    # 5: unbind
+    # The following commands are only executed if ran for the 1st time in this image.
+    # pre - pkpath - copy - del -pkgs - post
+    if ( ! -f "$self->{ChRoot}/etc/bootstrap_infos.txt") { # Image has never been bootstrapped.
+        # 1: pre
+        for my $script (@pre) {
+            oscar_log(5, INFO, "Running bootstrap pre-script: $script");
+            $script = $scripts_path.$script if ($script =~ /^\//);
+            if(oscar_system($script)) {
+                oscar_log(1, ERROR, "Failed to run pre($script)");
+                return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+            }
+        }
+
+        # 2: mkpath
+        if (@mkdir) {
+            my @dirs = map { $self->{ChRoot}.$_ } @mkdir;
+            oscar_log(5, INFO, "Creating some directories in the image:");
+            File::Path::make_path(@dirs, { verbose => 1, error => \my $mkperr }); # FIXME: do not hardcode verbose.
+            if (@$mkperr) {
+                for my $diag (@$mkperr) {
+                     my ($delfile, $delmessage) = %$diag;
+                     if ($delfile eq '') {
+                          oscar_log(1, ERROR, "Failed to create path: $delmessage");
+                          return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+                     } else {
+                          oscar_log(1, ERROR, "Failed to create path: $delfile: $delmessage");
+                          return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+                     }
+                }
+            }
+        }
+
+        # 3: copy
+        if (@copy) {
+            my ($count, $dirs, $depth);
+            for my $file2copy (@copy) {
+                oscar_log(5, INFO, "Copying $file2copy into the image.");
+                ($count, $dirs, $depth) = File::Copy::Recursive::fcopy($file2copy, "$self->{ChRoot}/$file2copy");
+                if ($count != 1) {
+                    oscar_log(1, ERROR, "Failed to copy $file2copy into the image.");
+                    return(PM_ERROR, "Failed to copy $file2copy into the image.");
+                }
+            }
+        }
+
+        # 3: del
+        if (@del) {
+            $cmd = "rm -rf ".join(" ",map { $self->{ChRoot}.$_ } @del);
+            oscar_log(5, INFO, "Deleting ".join(" ",@del)." from imagedir $self->{ChRoot}");
+            if(oscar_system($cmd)) {
+                oscar_log(1, ERROR, "Failed to delete ".join(" ",@del)." from image $self->{ChRoot}");
+                return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+            }
+        }
+
+        # 5: pkgs (install)
+        if (@pkgs) {
+            ($err, @output) = $self->do_simple_command ('smart_install', @pkgs);
+            if($err) {
+                oscar_log(1, ERROR, "Failed to install the following pkgs into image $self->{ChRoot}:\n".join(" ",@pkgs));
+                return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+            }
+        }
+
+        # 7: post
+        for my $script (@post) {
+            oscar_log(5, INFO, "Running bootstrap post-script: $script");
+            $script = $scripts_path.$script if ($script =~ /^\//);
+            if(oscar_system($script)) {
+                oscar_log(1, ERROR, "Failed to run post($script)");
+                return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+            }
+        }
+
+        # If cleanup successfull, put a stamp in the image.
+        if ($phase eq "cleanup") {
+            open BS_INFO, ">$self->{ChRoot}/etc/bootstrap_infos.txt"
+                || oscar_log(1, WARNING, "Could not create $self->{ChRoot}/etc/bootstrap_infos.txt");
+            print BS_INFO <<EOF;
+This image has been successfully bootstrapped for the following OS:
+$self->{Distro}.
+EOF
+            close BS_INFO;
+            oscar_log(5, INFO, "Successfully bootstrapped image $self->{ChRoot}");
+        }
+
+    } # End of section that is ran only once per image (real bootstrap)
+
+    $self->{Bootstrap} = $phase;
+
+    # 6: unbind (always executed).
     for my $umpt (@unbind) {
         $cmd = "umount ".$self->{ChRoot}.$umpt;
         oscar_log(5, INFO, "Unmounting $umpt from imagedir $self->{ChRoot}");
         if(oscar_system($cmd)) {
             oscar_log(1, ERROR, "Failed to unmount $umpt from image $self->{ChRoot}");
-            return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+            return(PM_ERROR, "Failed to unmount $umpt from image: $self->{ChRoot}");
         }
     }
 
-    # 6: pkgs (install)
-    if (@pkgs) {
-        ($err, @output) = $self->do_simple_command ('smart_install', @pkgs);
-        if($err) {
-            oscar_log(1, ERROR, "Failed to install the following pkgs into image $self->{ChRoot}:\n".join(" ",@pkgs));
-            return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
-        }
-    }
-
-    # 7: post
-    for my $script (@post) {
-        oscar_log(5, INFO, "Running bootstrap post-script: $script");
-        $script = $scripts_path.$script if ($script =~ /^\//);
-        if(oscar_system($script)) {
-            oscar_log(1, ERROR, "Failed to run post($script)");
-            return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
-        }
-    }
-
-    $self->{Bootstrap} = $phase;
-
-    # If cleanup successfull, put a stamp in the image.
-    if ($phase eq "cleanup") {
-        open BS_INFO, ">$self->{ChRoot}/etc/bootstrap_infos.txt"
-            || oscar_log(1, WARNING, "Could not create $self->{ChRoot}/etc/bootstrap_infos.txt");
-        print BS_INFO <<EOF;
-This image has been successfully bootstrapped for the following OS:
-$self->{Distro}.
-EOF
-        close BS_INFO;
-        oscar_log(5, INFO, "Successfully bootstrapped image $self->{ChRoot}");
-    }
     return(PM_SUCCESS);
 }
 
