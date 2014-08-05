@@ -1,7 +1,7 @@
 
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman
-Version:   		3.3.0
+Version:   		3.3.1
 Release:   		1%{?dist}
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:		OSCAR
@@ -49,6 +49,9 @@ interface.
 %{perl_vendorlib}/OSCAR/PackMan/RPM.pm
 
 %changelog
+* Mon Aug 05 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 3.3.1-1
+- Performance improvement.
+- New imaging mechanism.
 * Thu Jul 31 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 3.3.0-1
 - Adapt to new oscarsamples directory structure.
 - Has a clean image bootstrapping mechanism.
