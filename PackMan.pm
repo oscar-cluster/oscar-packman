@@ -718,10 +718,12 @@ sub smart_image_bootstrap($$) {
             }
         }
     }
+    oscar_log(5, INFO, "Setting up Signal Handlers for INT QUIT TERM KILL");
     $SIG{INT}  = \&PackManSigHandler; # Catch signals so we can unmount garbage.
     $SIG{QUIT} = \&PackManSigHandler;
     $SIG{TERM} = \&PackManSigHandler;
     $SIG{KILL} = \&PackManSigHandler;
+    $SIG{HUP}  = \&PackManSigHandler;
     for my $mpt (@bind) {
         $img_path = $self->{ChRoot}; # Keep track of current image for SigHandler.
         $cmd = "mount -o bind ".$mpt." ".$self->{ChRoot}.$mpt;
@@ -838,6 +840,7 @@ EOF
     $SIG{QUIT} = 'DEFAULT';
     $SIG{TERM} = 'DEFAULT';
     $SIG{KILL} = 'DEFAULT';
+    $SIG{HUP}  = 'DEFAULT';
 
     return(PM_SUCCESS);
 }
@@ -1577,20 +1580,26 @@ sub restart_httpd {
 
 sub PackManSigHandler {
     my $signal=@_;
-    carp("Caught signal $signal");
+    carp("PackMan.pm: Caught signal $signal");
 
     # Try to unmount mounted stuffs in current image path.
     chdir("/tmp"); # Try to move outside the image path (just in case).
     my $cmd = "";
     if(defined($img_path) && ($img_path ne "/") && (-d $img_path)) {
+        my @mounts = ();
         open(MOUNTS, "< /proc/mounts")
             or die "cannot open /proc/mounts: $!";
         while (my $line = <MOUNTS>) {
-            if ($line =~ /^\S+\s+(\Q$img_path\E)\s+.*$/) {
-                print "Unmounting $1\n";
-                $cmd = "umount $1";
-                oscar_system($cmd);
+            chomp($line);
+            if ($line =~ /^.*\s+(\Q$img_path\E\/\S+)\s+.*$/) {
+                push(@mounts, $1); # Cannot unount hear otherwize /proc/mounts changes and we loose lines
             }
+        }
+        close MOUNTS;
+        for my $mount (@mounts) {
+            $cmd = "umount $mount";
+            oscar_log(5, INFO, "Unmounting [$mount]");
+            oscar_system($cmd);
         }
     }
     exit 0;
