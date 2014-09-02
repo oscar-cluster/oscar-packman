@@ -718,12 +718,12 @@ sub smart_image_bootstrap($$) {
             }
         }
     }
+    $SIG{INT}  = \&PackManSigHandler; # Catch signals so we can unmount garbage.
+    $SIG{QUIT} = \&PackManSigHandler;
+    $SIG{TERM} = \&PackManSigHandler;
+    $SIG{KILL} = \&PackManSigHandler;
     for my $mpt (@bind) {
         $img_path = $self->{ChRoot}; # Keep track of current image for SigHandler.
-        $SIG{INT}  = \&SigHandler; # Catch signals so we can unmount garbage.
-        $SIG{QUIT} = \&SigHandler;
-        $SIG{TERM} = \&SigHandler;
-        $SIG{KILL} = \&SigHandler;
         $cmd = "mount -o bind ".$mpt." ".$self->{ChRoot}.$mpt;
         oscar_log(5, INFO, "Mounting $mpt into image $self->{ChRoot}");
         if(oscar_system($cmd)) {
@@ -832,12 +832,12 @@ EOF
             oscar_log(1, ERROR, "Failed to unmount $umpt from image $self->{ChRoot}");
             return(PM_ERROR, "Failed to unmount $umpt from image: $self->{ChRoot}");
         }
-        $SIG{INT}  = 'DEFAULT'; # Reset signal handler
-        $SIG{QUIT} = 'DEFAULT';
-        $SIG{TERM} = 'DEFAULT';
-        $SIG{KILL} = 'DEFAULT';
         $img_path = "/"; # Reset current image path.
     }
+    $SIG{INT}  = 'DEFAULT'; # Reset signal handler
+    $SIG{QUIT} = 'DEFAULT';
+    $SIG{TERM} = 'DEFAULT';
+    $SIG{KILL} = 'DEFAULT';
 
     return(PM_SUCCESS);
 }
@@ -1575,7 +1575,7 @@ sub restart_httpd {
         or ( oscar_log(1, ERROR, "Couldn't restart http service."), return -1);
 }
 
-sub SigHandler {
+sub PackManSigHandler {
     my $signal=@_;
     carp("Caught signal $signal");
 
