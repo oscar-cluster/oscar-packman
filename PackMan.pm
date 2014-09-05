@@ -1616,7 +1616,7 @@ sub UmountImageSpecialFS() {
 
         # Before trying to unmount, we need to kill process that may lock the $img_path
         oscar_log(5, INFO, "Killing garbage process from package post install scriptlets holding locks on image dir");
-        oscar_system("lsof|grep $img_path|awk '{print $2}'|sort|uniq|xargs kill -TERM");
+        oscar_system("lsof|grep $img_path|awk '{print \$2}'|sort|uniq|xargs kill -TERM");
 
         # Now we can safely try to unmount
         for my $mount (@mounts) {
