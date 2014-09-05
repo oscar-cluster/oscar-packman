@@ -51,7 +51,7 @@ interface.
 %changelog
 * Fri Sep 05 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 3.3.2-1
 - Bugfix: fixed could not umount /dev in image.
-* Mon Aug 05 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 3.3.1-1
+* Tue Aug 05 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 3.3.1-1
 - Performance improvement.
 - New imaging mechanism.
 * Thu Jul 31 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 3.3.0-1
