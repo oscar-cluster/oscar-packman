@@ -1,3 +1,9 @@
+packman (3.3.2-1) lucid; urgency=low
+
+  * Bugfix: fixed could not umount /dev in image.
+
+ -- Olivier Lahaye <olivier.lahaye1@free.fr>  Fri, 05 Sep 2014 18:51:18 +0200
+
 packman (3.3.1-1) lucid; urgency=low
 
   * Performance improvement.

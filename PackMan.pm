@@ -718,19 +718,22 @@ sub smart_image_bootstrap($$) {
             }
         }
     }
-    oscar_log(5, INFO, "Setting up Signal Handlers for INT QUIT TERM KILL");
-    $SIG{INT}  = \&PackManSigHandler; # Catch signals so we can unmount garbage.
-    $SIG{QUIT} = \&PackManSigHandler;
-    $SIG{TERM} = \&PackManSigHandler;
-    $SIG{KILL} = \&PackManSigHandler;
-    $SIG{HUP}  = \&PackManSigHandler;
-    for my $mpt (@bind) {
+
+    if(@bind) { # If we have some mount points:
+        oscar_log(5, INFO, "Setting up Signal Handlers for INT QUIT TERM KILL");
+        $SIG{INT}  = \&PackManSigHandler; # Catch signals so we can unmount garbage.
+        $SIG{QUIT} = \&PackManSigHandler;
+        $SIG{TERM} = \&PackManSigHandler;
+        $SIG{KILL} = \&PackManSigHandler;
+        $SIG{HUP}  = \&PackManSigHandler;
         $img_path = $self->{ChRoot}; # Keep track of current image for SigHandler.
-        $cmd = "mount -o bind ".$mpt." ".$self->{ChRoot}.$mpt;
-        oscar_log(5, INFO, "Mounting $mpt into image $self->{ChRoot}");
-        if(oscar_system($cmd)) {
-            oscar_log(1, ERROR, "Failed to mount $mpt into imagedir $self->{ChRoot}");
-            return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+        for my $mpt (@bind) {
+            $cmd = "mount -o bind ".$mpt." ".$self->{ChRoot}.$mpt;
+            oscar_log(5, INFO, "Mounting $mpt into image $self->{ChRoot}");
+            if(oscar_system($cmd)) {
+                oscar_log(1, ERROR, "Failed to mount $mpt into imagedir $self->{ChRoot}");
+               return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+            }
         }
     }
 
@@ -827,22 +830,32 @@ EOF
     $self->{Bootstrap} = $phase;
 
     # 6: unbind (always executed).
+    my $err_count=0;
     for my $umpt (@unbind) {
         $cmd = "umount ".$self->{ChRoot}.$umpt;
         oscar_log(5, INFO, "Unmounting $umpt from imagedir $self->{ChRoot}");
         if(oscar_system($cmd)) {
             oscar_log(1, ERROR, "Failed to unmount $umpt from image $self->{ChRoot}");
-            return(PM_ERROR, "Failed to unmount $umpt from image: $self->{ChRoot}");
+            $err_count++;
         }
-        $img_path = "/"; # Reset current image path.
     }
-    $SIG{INT}  = 'DEFAULT'; # Reset signal handler
-    $SIG{QUIT} = 'DEFAULT';
-    $SIG{TERM} = 'DEFAULT';
-    $SIG{KILL} = 'DEFAULT';
-    $SIG{HUP}  = 'DEFAULT';
 
-    return(PM_SUCCESS);
+    if ($phase eq "cleanup") {
+        UmountImageSpecialFS(); # Make sure that nothing is left unmounted.
+        $img_path = "/"; # Reset current image path.
+
+        $SIG{INT}  = 'DEFAULT'; # Reset signal handler
+        $SIG{QUIT} = 'DEFAULT';
+        $SIG{TERM} = 'DEFAULT';
+        $SIG{KILL} = 'DEFAULT';
+        $SIG{HUP}  = 'DEFAULT';
+    }
+
+    if($err_count>0) {
+        return(PM_ERROR, "Failed to unmount some filesystems from image: $self->{ChRoot}");
+    } else {
+        return(PM_SUCCESS);
+    }
 }
 
 # Command the underlying package manager to remove each of the packages in the
@@ -1581,7 +1594,11 @@ sub restart_httpd {
 sub PackManSigHandler {
     my $signal=@_;
     carp("PackMan.pm: Caught signal $signal");
+    UmountImageSpecialFS();
+    exit 0;
+}
 
+sub UmountImageSpecialFS() {
     # Try to unmount mounted stuffs in current image path.
     chdir("/tmp"); # Try to move outside the image path (just in case).
     my $cmd = "";
@@ -1596,13 +1613,18 @@ sub PackManSigHandler {
             }
         }
         close MOUNTS;
+
+        # Before trying to unmount, we need to kill process that may lock the $img_path
+        oscar_log(5, INFO, "Killing garbage process from package post install scriptlets holding locks on image dir");
+        oscar_system("lsof|grep $img_path|sort|uniq|xargs kill -TERM");
+
+        # Now we can safely try to unmount
         for my $mount (@mounts) {
             $cmd = "umount $mount";
             oscar_log(5, INFO, "Unmounting [$mount]");
             oscar_system($cmd);
         }
     }
-    exit 0;
 }
 
 1;
