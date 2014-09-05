@@ -1,3 +1,6 @@
+packman-3.3.2:
+- Bugfix: fixed could not umount /dev in image.
+
 packman-3.3.1:
 - Performance improvement.
 - New imaging mechanism.
