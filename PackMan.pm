@@ -479,6 +479,8 @@ sub do_simple_command {
                 if ($callback) {
                    &{$callback}($line, @{$cbargs});
                 }
+                print $line."\n"
+                    if ($OSCAR::Env::oscar_verbose >= 5);
             }
             close (SYSTEM) || oscar_log(1, ERROR, "Error during execution $?");
             my $err = $?;
@@ -831,12 +833,19 @@ EOF
 
     # 6: unbind (always executed).
     my $err_count=0;
-    for my $umpt (@unbind) {
-        $cmd = "umount ".$self->{ChRoot}.$umpt;
-        oscar_log(5, INFO, "Unmounting $umpt from imagedir $self->{ChRoot}");
-        if(oscar_system($cmd)) {
-            oscar_log(1, ERROR, "Failed to unmount $umpt from image $self->{ChRoot}");
-            $err_count++;
+
+    if (@unbind) {
+        # Before trying to unmount, we need to kill process that may lock the image path.
+        oscar_log(5, INFO, "Killing garbage process from package post install scriptlets holding locks on image dir.");
+        kill_processes_locking_path($self->{ChRoot});
+
+        for my $umpt (@unbind) {
+            $cmd = "umount ".$self->{ChRoot}.$umpt;
+            oscar_log(5, INFO, "Unmounting $umpt from imagedir $self->{ChRoot}");
+            if(oscar_system($cmd)) {
+                oscar_log(1, WARNING, "Failed to unmount $umpt from image $self->{ChRoot}");
+                $err_count++;
+            }
         }
     }
 
@@ -937,47 +946,17 @@ sub smart_install ($@) {
         or return (PM_ERROR, "ERROR: smart_install is an instance method");
     my @pkgs = @_;
     if ((scalar @pkgs) == 0) {
-        return (PM_SUCCESS, "smart_install successful");
+        return (PM_SUCCESS, "smart_install successful: no package to install.");
     }
     my ($err, @output, $msg);
 
     # 1st, we need to bootstrap the image.
     ($err, $msg) = $self->smart_image_bootstrap("bootstrap");
 
-    # If bootstrapping of the image fails, no need to continue.
+    # If bootstrapping of the image fails, we stop here.
     if (defined ($err) && $err) {
         return ($err, $msg);
     }
-
-
-#    my ($err, @output, $line);
-#    # If the image does not exist for a given RPM based image, we need to
-#    # bootstrap the image. For Debian system, RAPT deals with it.
-#    if ($self->{Format} eq "RPM" && defined ($self->{ChRoot}) 
-#                                 && (! -d $self->{ChRoot})) {
-#        oscar_log(1, INFO, "Bootstrapping the image...");
-#        
-#        # If this is an RPM based image, we need the following directory to
-#        # avoid error messages everytime we try to install a package.
-#        File::Path::mkpath ($self->{ChRoot}."/var/lib/yum");
-#        my $filerpmlist = $self->get_distro_sample_file("pkglists", "pkglist");
-#
-#        open(DAT, $filerpmlist)
-#            || (return(PM_ERROR, "Could not open file $filerpmlist"));
-#        while ($line = <DAT>) {
-#            next if (!OSCAR::Utils::is_a_valid_string ($line));
-#            $line = OSCAR::Utils::trim ($line);
-#            next if ($line =~ /^#/);
-#            ($err, @output) = $self->do_simple_command ('smart_install',
-#                              $line);
-#            if ($err == PM_ERROR) {
-#                oscar_log(1, ERROR, "Unable to install $line");
-#            }
-#        }
-#        close (DAT);
-#    }
-#
-
 
     # 2nd, Now that the image is bootstrapped, we can actually install the packages.
     ($err, @output) = $self->do_simple_command ('smart_install', @pkgs);
@@ -990,12 +969,15 @@ sub smart_install ($@) {
         } else {
             return (PM_ERROR, join("\n", @output));
         }
+    } else {
+        oscar_log(5, INFO, "Smart install succeeded for image: $self->{ChRoot}");
     }
 
     # 3rd, we need to cleanup the image. (unmount some binded filesystems, remove some garbage, ...)
     ($err, $msg) = $self->smart_image_bootstrap("cleanup");
     if (defined ($err) && $err) {
-        return (PM_ERROR, $err);
+        oscar_log(1, WARNING, "there were errors cleaning up image: $msg");
+        return (PM_SUCCESS);
     }
 
     # 4th, Finished, we return SUCCESS.
@@ -1616,7 +1598,7 @@ sub UmountImageSpecialFS() {
 
         # Before trying to unmount, we need to kill process that may lock the $img_path
         oscar_log(5, INFO, "Killing garbage process from package post install scriptlets holding locks on image dir");
-        oscar_system("lsof|grep $img_path|awk '{print \$2}'|sort|uniq|xargs kill -TERM");
+        kill_processes_locking_path($img_path);
 
         # Now we can safely try to unmount
         for my $mount (@mounts) {
@@ -1625,6 +1607,11 @@ sub UmountImageSpecialFS() {
             oscar_system($cmd);
         }
     }
+}
+
+END {
+    # Make sure we don't leave unwanted mounted filesystems.
+    UmountImageSpecialFS();
 }
 
 1;
