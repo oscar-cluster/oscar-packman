@@ -1,7 +1,7 @@
 
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman
-Version:   		3.3.2
+Version:   		3.3.3
 Release:   		1%{?dist}
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:		OSCAR
@@ -49,6 +49,10 @@ interface.
 %{perl_vendorlib}/OSCAR/PackMan/RPM.pm
 
 %changelog
+* Fri Sep 12 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 3.3.2-1
+- Force print output flush so pkg install output is not delayed.
+- More robust cleanup upon unexpected exit and more friendly
+  verbose output.
 * Fri Sep 05 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 3.3.2-1
 - Bugfix: fixed could not umount /dev in image.
 * Tue Aug 05 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 3.3.1-1

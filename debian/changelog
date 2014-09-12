@@ -1,3 +1,11 @@
+packman (3.3.3-1) lucid; urgency=low
+
+  * Force print output flush so pkg install output is not delayed.
+  * More robust cleanup upon unexpected exit and more friendly 
+    verbose output.
+
+ -- Olivier Lahaye <olivier.lahaye1@free.fr>  Fri, 12 Sep 2014 14:01:58 +0200
+
 packman (3.3.2-1) lucid; urgency=low
 
   * Bugfix: fixed could not umount /dev in image.

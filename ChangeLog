@@ -1,3 +1,7 @@
+packman-3.3.3:
+- Enhancement: Force print output flush so pkg install output is not delayed.
+- More robust cleanup upon unexpected exit and more friendly verbose output.
+
 packman-3.3.2:
 - Bugfix: fixed could not umount /dev in image.
 

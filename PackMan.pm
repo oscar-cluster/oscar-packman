@@ -103,6 +103,8 @@ BEGIN {
                  " implementations could be found!";
 
     @preference = grep { defined $concrete{$_} } @preference;
+
+    $| = 1; # Force print output flush so package install output is not delayed.
 }
 
 # AUTOLOAD named constructors for the concrete modules
