@@ -972,7 +972,11 @@ sub smart_install ($@) {
             return (PM_ERROR, join("\n", @output));
         }
     } else {
-        oscar_log(5, INFO, "Smart install succeeded for image: $self->{ChRoot}");
+        if (defined ($self->{ChRoot}) && $self->{ChRoot} ne "/") {
+            oscar_log(5, INFO, "Smart install succeeded for image: $self->{ChRoot}");
+        } else {
+            oscar_log(5, INFO, "Smart install succeeded.");
+        }
     }
 
     # 3rd, we need to cleanup the image. (unmount some binded filesystems, remove some garbage, ...)
