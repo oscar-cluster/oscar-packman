@@ -1,16 +1,20 @@
 
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman
-Version:   		3.3.3
+Version:   		3.3.4
 Release:   		1%{?dist}
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:		OSCAR
-Packager:		Geoffroy Vallee <valleegr@ornl.gov>
+Packager:		Olivier Lahaye <olivier.lahaye@cea.fr>
 License: 		GPL
 Group:     		Development/Libraries
 Source:			%{name}.tar.gz
 BuildRoot: 		%{_localstatedir}/%{name}-root
 BuildArch:		noarch
+BuildRequires:		rpm-build
+%if 0%{?fedora} >= 16 || 0%{?rhel} > = 7
+BuildRequires:		perl-generators, perl-interpreter
+%endif
 # createrepo used by yume --prepare. dep is here because yume doesn't have this requirement
 # indeed, yume on nodes don't need --prepare associated requirements.
 Requires:       	oscar-base-lib, yume >= 2.8.2, createrepo
