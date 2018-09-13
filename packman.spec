@@ -53,6 +53,10 @@ interface.
 %{perl_vendorlib}/OSCAR/PackMan/RPM.pm
 
 %changelog
+* Thu Sep 13 2018 Olivier Lahaye <olivier.lahaye@cea.fr> 3.3.4-1
+- Make perl rpbuild dependancies generator are installed when building package.
+* Fri Sep 12 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 3.3.3-1
+- Update version so package gets updated.
 * Fri Sep 12 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 3.3.2-1
 - Force print output flush so pkg install output is not delayed.
 - More robust cleanup upon unexpected exit and more friendly
