@@ -1,3 +1,6 @@
+packman-3.3.4:
+- Smarter specfile (make sure perl automatic deps will be generated.
+
 packman-3.3.3:
 - Enhancement: Force print output flush so pkg install output is not delayed.
 - More robust cleanup upon unexpected exit and more friendly verbose output.
