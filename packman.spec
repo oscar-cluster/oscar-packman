@@ -12,7 +12,7 @@ Source:			%{name}.tar.gz
 BuildRoot: 		%{_localstatedir}/%{name}-root
 BuildArch:		noarch
 BuildRequires:		rpm-build
-%if 0%{?fedora} >= 16 || 0%{?rhel} > = 7
+%if 0%{?fedora} >= 16 || 0%{?rhel} >= 7
 BuildRequires:		perl-generators, perl-interpreter
 %endif
 # createrepo used by yume --prepare. dep is here because yume doesn't have this requirement
