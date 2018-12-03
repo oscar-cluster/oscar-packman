@@ -13,11 +13,11 @@ BuildRoot: 		%{_localstatedir}/%{name}-root
 BuildArch:		noarch
 BuildRequires:		rpm-build
 %if 0%{?fedora} >= 16 || 0%{?rhel} >= 7
-BuildRequires:		perl-generators, perl-interpreter
+BuildRequires:		perl-generators, perl-interpreter, perl(Pod::Man)
 %endif
 # createrepo used by yume --prepare. dep is here because yume doesn't have this requirement
 # indeed, yume on nodes don't need --prepare associated requirements.
-Requires:       	oscar-base-lib, yume >= 2.8.2, createrepo
+Requires:       	oscar-base-lib, yume >= 2.8.2, createrepo, rapt
 
 %description
 A collection of Perl object modules for use in the OSCAR framework (among
