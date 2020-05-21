@@ -1,3 +1,4 @@
+%define is_suse %(test -f /etc/SuSE-release && echo 1 || echo 0)
 
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman
@@ -12,9 +13,14 @@ Source:			%{name}.tar.gz
 BuildRoot: 		%{_localstatedir}/%{name}-root
 BuildArch:		noarch
 BuildRequires:		rpm-build
-%if 0%{?fedora} >= 16 || 0%{?rhel} >= 7
-BuildRequires:		perl-generators, perl-interpreter, perl(Pod::Man)
+%if 0%{?fedora} >= 16 || 0%{?rhel} >= 6
+BuildRequires:		perl-generators, perl-interpreter
 %endif
+%if 0%{?is_suse}%{?is_opensuse}
+BuildRequires:		rpm, perl
+%endif
+BuildRequires:		perl(Pod::Man)
+
 # createrepo used by yume --prepare. dep is here because yume doesn't have this requirement
 # indeed, yume on nodes don't need --prepare associated requirements.
 Requires:       	oscar-base-lib, yume >= 2.8.2, createrepo, rapt
