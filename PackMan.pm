@@ -778,11 +778,17 @@ sub smart_image_bootstrap($$) {
             my ($count, $dirs, $depth);
             for my $file2copy (@copy) {
                 oscar_log(5, INFO, "Copying $file2copy into the image.");
-                ($count, $dirs, $depth) = File::Copy::Recursive::fcopy($file2copy, "$self->{ChRoot}/$file2copy");
-                if ($count != 1) {
-                    oscar_log(1, ERROR, "Failed to copy $file2copy into the image.");
-                    return(PM_ERROR, "Failed to copy $file2copy into the image.");
-                }
+		if ( -e $file2copy ) {
+                    ($count, $dirs, $depth) = File::Copy::Recursive::fcopy($file2copy, "$self->{ChRoot}/$file2copy");
+                    if ($count != 1) {
+                        oscar_log(1, ERROR, "Failed to copy $file2copy into the image.");
+                        return(PM_ERROR, "Failed to copy $file2copy into the image.");
+                    }
+	        } else {
+		    oscar_log(5, ERROR, "File $file2copy doesn't exists!");
+		    return(PM_ERROR, "Failed to copy $file2copy into the image.");
+		}
+
             }
         }
 
