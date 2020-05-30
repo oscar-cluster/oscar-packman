@@ -750,6 +750,7 @@ sub smart_image_bootstrap($$) {
             $script = $scripts_path.$script if ($script =~ /^\//);
             if(oscar_system($script)) {
                 oscar_log(1, ERROR, "Failed to run pre($script)");
+		UmountImageSpecialFS() if(@bind); # Unmount what we have mounted
                 return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
             }
         }
@@ -760,6 +761,7 @@ sub smart_image_bootstrap($$) {
             oscar_log(5, INFO, "Creating some directories in the image:");
             File::Path::make_path(@dirs, { verbose => 1, error => \my $mkperr }); # FIXME: do not hardcode verbose.
             if (@$mkperr) {
+                UmountImageSpecialFS() if(@bind); # Aborting process: Unmount what we have mounted
                 for my $diag (@$mkperr) {
                      my ($delfile, $delmessage) = %$diag;
                      if ($delfile eq '') {
@@ -780,12 +782,16 @@ sub smart_image_bootstrap($$) {
                 oscar_log(5, INFO, "Copying $file2copy into the image.");
 		if ( -e $file2copy ) {
                     ($count, $dirs, $depth) = File::Copy::Recursive::fcopy($file2copy, "$self->{ChRoot}/$file2copy");
-                    if ($count != 1) {
+		    if (undef $count) {
+			oscar_log(1, ERROR, "Perl fcopy() didn't tel if it succeeded! PERL BUG! Assuming OK.");
+		    } elsif ($count != 1) {
                         oscar_log(1, ERROR, "Failed to copy $file2copy into the image.");
+                        UmountImageSpecialFS() if(@bind); # Aborting process: Unmount what we have mounted
                         return(PM_ERROR, "Failed to copy $file2copy into the image.");
                     }
 	        } else {
 		    oscar_log(5, ERROR, "File $file2copy doesn't exists!");
+                    UmountImageSpecialFS() if(@bind); # Aborting process: Unmount what we have mounted
 		    return(PM_ERROR, "Failed to copy $file2copy into the image.");
 		}
 
@@ -798,6 +804,7 @@ sub smart_image_bootstrap($$) {
             oscar_log(5, INFO, "Deleting ".join(" ",@del)." from imagedir $self->{ChRoot}");
             if(oscar_system($cmd)) {
                 oscar_log(1, ERROR, "Failed to delete ".join(" ",@del)." from image $self->{ChRoot}");
+                UmountImageSpecialFS() if(@bind); # Aborting process: Unmount what we have mounted
                 return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
             }
         }
@@ -808,6 +815,7 @@ sub smart_image_bootstrap($$) {
             ($err, @output) = $self->do_simple_command ('smart_install', @pkgs);
             if($err) {
                 oscar_log(1, ERROR, "Failed to install the following pkgs into image $self->{ChRoot}:\n".join(" ",@pkgs));
+                UmountImageSpecialFS() if(@bind); # Aborting process: Unmount what we have mounted
                 return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
             }
         }
@@ -818,6 +826,7 @@ sub smart_image_bootstrap($$) {
             $script = $scripts_path.$script if ($script =~ /^\//);
             if(oscar_system($script)) {
                 oscar_log(1, ERROR, "Failed to run post($script)");
+                UmountImageSpecialFS() if(@bind); # Aborting process: Unmount what we have mounted
                 return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
             }
         }
