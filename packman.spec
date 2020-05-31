@@ -2,7 +2,7 @@
 
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman
-Version:   		3.3.4
+Version:   		3.3.5
 Release:   		1%{?dist}
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:		OSCAR
@@ -59,6 +59,8 @@ interface.
 %{perl_vendorlib}/OSCAR/PackMan/RPM.pm
 
 %changelog
+* Sun May 31 2020 Olivier Lahaye <olivier.lahaye@cea.fr> 3.3.5-1
+- Bugfix release (handle errors when bootstrapping immage)
 * Thu Sep 13 2018 Olivier Lahaye <olivier.lahaye@cea.fr> 3.3.4-1
 - Make perl rpbuild dependancies generator are installed when building package.
 * Fri Sep 12 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 3.3.3-1

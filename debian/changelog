@@ -1,3 +1,13 @@
+packman (3.3.5-1) lucid; urgency=low
+
+  * Bugfix: Better handling of failures in chrooted environment.
+            Make sure we unmount what has been mounted in image before
+            returning.
+
+packman (3.3.4-1) lucid; urgency=low
+
+  * RPM packaging enhancements.
+
 packman (3.3.3-1) lucid; urgency=low
 
   * Force print output flush so pkg install output is not delayed.

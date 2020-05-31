@@ -1,5 +1,10 @@
+packman-3.3.5:
+- Bugfix: Better handling of failures in chrooted environment.
+-         Make sure we unmount what has been mounted in image before
+-         returning.
+
 packman-3.3.4:
-- Smarter specfile (make sure perl automatic deps will be generated.
+- Smarter specfile (make sure perl automatic deps will be generated).
 
 packman-3.3.3:
 - Enhancement: Force print output flush so pkg install output is not delayed.
