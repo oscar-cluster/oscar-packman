@@ -782,7 +782,7 @@ sub smart_image_bootstrap($$) {
                 oscar_log(5, INFO, "Copying $file2copy into the image.");
 		if ( -e $file2copy ) {
                     ($count, $dirs, $depth) = File::Copy::Recursive::rcopy($file2copy, "$self->{ChRoot}/$file2copy");
-		    if (undef $count) {
+		    if (! defined $count) {
 			oscar_log(1, ERROR, "Perl rcopy() didn't tel if it succeeded! PERL BUG! Assuming OK.");
 		    } elsif ($count < 1) {
                         oscar_log(1, ERROR, "Failed to copy $file2copy into the image.");
