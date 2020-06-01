@@ -781,20 +781,21 @@ sub smart_image_bootstrap($$) {
             for my $file2copy (@copy) {
                 oscar_log(5, INFO, "Copying $file2copy into the image.");
 		if ( -e $file2copy ) {
-                    ($count, $dirs, $depth) = File::Copy::Recursive::fcopy($file2copy, "$self->{ChRoot}/$file2copy");
+                    ($count, $dirs, $depth) = File::Copy::Recursive::rcopy($file2copy, "$self->{ChRoot}/$file2copy");
 		    if (undef $count) {
-			oscar_log(1, ERROR, "Perl fcopy() didn't tel if it succeeded! PERL BUG! Assuming OK.");
-		    } elsif ($count != 1) {
+			oscar_log(1, ERROR, "Perl rcopy() didn't tel if it succeeded! PERL BUG! Assuming OK.");
+		    } elsif ($count < 1) {
                         oscar_log(1, ERROR, "Failed to copy $file2copy into the image.");
                         UmountImageSpecialFS() if(@bind); # Aborting process: Unmount what we have mounted
                         return(PM_ERROR, "Failed to copy $file2copy into the image.");
-                    }
+                    } else {
+                        oscar_log(5, INFO, "Copied $count file(s) or dir(s) into the imge.");
+		    }
 	        } else {
 		    oscar_log(5, ERROR, "File $file2copy doesn't exists!");
                     UmountImageSpecialFS() if(@bind); # Aborting process: Unmount what we have mounted
 		    return(PM_ERROR, "Failed to copy $file2copy into the image.");
 		}
-
             }
         }
 
