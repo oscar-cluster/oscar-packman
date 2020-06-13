@@ -85,7 +85,10 @@ if ($prepare_repo) {
 }
 
 my $cmd = $ARGV[0];
-if ( command_is_valid ($cmd) == 0 ) {
+if ( !defined($cmd) ) {
+    oscar_log(1, ERROR, "You try to execute without command");
+    exit 1;
+} elsif ( command_is_valid ($cmd) == 0 ) {
     oscar_log(1, ERROR, "You try to execute an unsupported command $ARGV[0]");
     exit 1;
 } else {
