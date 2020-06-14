@@ -1242,7 +1242,7 @@ sub parse_deb_search_result ($@) {
 ################################################################################
 sub parse_rpm_search_result ($@) {
     ref (my $self = shift)
-        or return (PM_ERROR, "parse_deb_search_result is an instance method");
+        or return (PM_ERROR, "parse_rpm_search_result is an instance method");
     my @output = @_;
     my @opkgs;
 
