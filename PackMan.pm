@@ -1327,6 +1327,7 @@ sub rpm_pkg_data_to_hash ($@) {
     for (my $i=0; $i < scalar (@output); $i++) {
         if (OSCAR::Utils::is_a_valid_string($output[$i]) == 1) {
             @tokens = split (/:/, $output[$i], 2);
+            next if scalar(@tokens) == 1;
 #            print STDERR "Token ID: ". $tokens[0].".\n";
             if (OSCAR::Utils::trim ($tokens[0]) eq "Name") {
                 $name = OSCAR::Utils::trim ($tokens[1]);
@@ -1344,9 +1345,8 @@ sub rpm_pkg_data_to_hash ($@) {
                 $desc = OSCAR::Utils::trim ($tokens[1]);
             }
             if (OSCAR::Utils::trim ($tokens[0]) eq "") {
-                $desc .= OSCAR::Utils::trim ($tokens[1]);
+                $desc .= " ".OSCAR::Utils::trim ($tokens[1]);
             }
-            $i++ if scalar(@tokens) == 1;
         }
         if ($name) {
             $o{$name} = {
