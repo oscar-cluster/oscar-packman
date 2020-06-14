@@ -202,7 +202,58 @@ if ( !defined($cmd) ) {
 }
 
 sub help () {
-    print "Please execute \"man packman\"\n";
+    print <<EOF;
+Usage: packman [OPTIONS] COMMANDS
+
+A simple command line interface to manipulate binary packages transparently,
+the underneath binary package format being abstracted.
+
+Options:
+  --distro
+	Specify the Linux distribution that should be used to perform the
+	commands.  Typically this parameter will allow PackMan to identify
+	the OSCAR repositories that must be used for the command execution.
+
+  --prepare-repo <repo_path>
+	Prepare a local repository of binary packages (repository available
+	at "repo_path").
+
+  --root
+	Specify the root where the commands should be executed (a chroot is
+	typically used).
+
+  --verbose | -v
+	Enable the verbose mode (usefull for debugging).
+
+  --debug | -d
+	Enable debugging output.
+
+  --help
+	This help information.
+
+Commands:
+  install <pkg1 name> <pkg2 name> ...
+	Install one or more package(s).
+
+  remove <pkg1 name> <pkg2 name> ...
+	Uninstall one or more package(s).
+
+  search <pkg name>
+	Return package name if found (available).
+
+  show <pkg name>
+	Show details for selected package.
+
+  list
+	List installed packages.
+
+Examples:
+	Install the dpkg package into the image stored in /tmp/test:
+
+	sudo packman --root /tmp/test/ --distro ubuntu-7-i386 install dpkg
+
+	Note that if the image does not already exists, the image will be bootstrapped.
+EOF
 }
 
 sub help_and_die {
