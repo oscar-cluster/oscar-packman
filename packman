@@ -130,7 +130,7 @@ if ( !defined($cmd) ) {
         oscar_log(1, ERROR, "Impossible to specify the distro of the PackMan object");
         exit 1;
     }
-    oscar_log(5, INFO, "PM Status: ".$pm->status());
+    oscar_log(5, INFO, "".$pm->status());
     if (defined $root) {
         if ($pm->chroot($root) == 0) {
             oscar_log(1, ERROR, "Impossible to specify the root of the PackMan object");
