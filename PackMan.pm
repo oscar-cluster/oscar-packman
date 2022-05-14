@@ -281,6 +281,7 @@ sub status {
         if defined $repo_ref;
     $str .= "\tList of repos: ". join(", ", @$repo_ref) . "\n"
         if (defined $repo_ref && scalar (@$repo_ref) > 0);
+    $str .= "\tVerbosity level: ".$self->{Verbosity}";
     return $str;
 }
 
