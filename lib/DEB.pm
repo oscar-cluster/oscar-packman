@@ -39,7 +39,7 @@ use base qw(OSCAR::PackMan);
 # boilerplate constructor because PackMan's is "abstract"
 sub new {
   ref (my $class = shift) and croak ("constructor called on instance");
-  my $new  = { ChRoot => shift, Format => "DEB", Distro => undef, Bootstrap => "" };
+  my $new  = { ChRoot => shift, Format => "DEB", Distro => undef, Bootstrap => "" , Verbosity => 0 };
   bless ($new, $class);
   return ($new);
 }
@@ -177,7 +177,7 @@ sub distro_arg_command_line {
 
 # How rapt installs packages
 sub smart_install_command_line {
-    1,'/usr/bin/rapt #repos #distro -y #chroot install #args --allow-unauthenticated'
+    1,'/usr/bin/rapt #verbose #repos #distro -y #chroot install #args --allow-unauthenticated'
 }
 
 # How rapt removes packages
@@ -187,22 +187,22 @@ sub smart_remove_command_line {
 
 # Generate repository caches
 sub gencache_command_line {
-    1,'rapt #repos --prepare'
+    1,'rapt #verbose #repos --prepare'
 }
 
 # How to search packages in a repository
 sub search_repo_command_line {
-    1,'rapt #repos #chroot --names-only search \'#args\''
+    1,'rapt #verbose #repos #chroot --names-only search \'#args\''
 }
 
 # How to show packages details in a repository
 sub show_repo_command_line {
-    1, 'rapt #repos #chroot show #args'
+    1, 'rapt #verbose #repos #chroot show #args'
 }
 
-# Clear apt caches
+# Clear apt caches #BUG: can't work right? OL
 sub do_clean {
-    return system("rapt #repos #chroot clean");
+    return system("rapt #verbose #repos #chroot clean");
 }
 
 #

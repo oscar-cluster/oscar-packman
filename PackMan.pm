@@ -258,6 +258,17 @@ sub distro {
     }
 }
 
+sub verbose {
+    ref (my $self = shift) or croak "verbose is an instance method";
+    if (@_) {
+        my $verbosity = shift;
+	$verbosity !~ /^\d+$/ && croak "verbose must be a number";
+	$self->{Verbosity} = $verbosity;
+    } else {
+	$self->{Verbosity} = 0;
+    }
+}
+
 sub status {
     ref (my $self = shift) or croak "status is an instance method";
     my $str = "Packman status:\n";
@@ -323,6 +334,15 @@ sub command_helper {
 
     oscar_log(5, INFO, "No repositories available with this PackMan object") 
         if (!defined ($self->{Repos}));
+    # verbosity flag replacement
+    if ($cl =~ m/#verbose/) {
+        if ($self->{Verbosity} >= 5) {
+            $cl =~ s/#verbose/-v/g;
+        } else {
+            $cl =~ s/#verbose//g;
+        }
+    }
+
     # repositories replacement
     if (defined ($self->{Repos})) {
         # substitute value of $Repos into implementation's repo_arg_command_line

@@ -22,7 +22,7 @@ use base qw(OSCAR::PackMan);
 # boilerplate constructor because PackMan's is "abstract"
 sub new {
   ref (my $class = shift) and croak ("constructor called on instance");
-  my $new  = { ChRoot => shift, Format => "RPM", Distro => undef, Bootstrap => "" };
+  my $new  = { ChRoot => shift, Format => "RPM", Distro => undef, Bootstrap => "", Verbosity => 0 };
   bless ($new, $class);
   return ($new);
 }
@@ -167,42 +167,42 @@ sub distro_arg_command_line {
 
 # How yume installs packages
 sub smart_install_command_line {
-    1,'yume #repos -y #chroot install #args'
+    1,'yume #verbose #repos -y #chroot install #args'
 }
 
 # How yume removes packages
 sub smart_remove_command_line {
-    1,'yume #repos -y #chroot remove #args'
+    1,'yume #verbose #repos -y #chroot remove #args'
 }
 
 # How yume updates packages
 sub smart_update_command_line {
-    1,'yume #repos -y #chroot update #args'
+    1,'yume #verbose #repos -y #chroot update #args'
 }
 
 # How to search packages in a repository
 sub search_repo_update_command_line {
-    1,'yume #repos #chroot --repoquery --nevra #args'
+    1,'yume #verbose #repos #chroot --repoquery --nevra #args'
 }
 
 # Clear yum caches
 sub do_clean {
-    return system("yume #repos #chroot clean all");
+    return system("yume #verbose #repos #chroot clean all");
 }
 
 # Generate repository caches
 sub gencache_command_line {
-    1,'yume #repos --prepare'
+    1,'yume #verbose #repos --prepare'
 }
 
 # How to search packages in a repository
 sub search_repo_command_line {
-    1,'yume #repos #chroot search #args'
+    1,'yume #verbose #repos #chroot search #args'
 }
 
 # How to show packages details in a repository
 sub show_repo_command_line {
-    1, 'yume #repos #chroot info #args'
+    1, 'yume #verbose #repos #chroot info #args'
 }
 
 1;

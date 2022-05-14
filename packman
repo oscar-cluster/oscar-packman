@@ -130,6 +130,7 @@ if ( !defined($cmd) ) {
         oscar_log(1, ERROR, "Impossible to specify the distro of the PackMan object");
         exit 1;
     }
+    $pm->verbosity($verbose);
     oscar_log(5, INFO, "".$pm->status());
     if (defined $root) {
         if ($pm->chroot($root) == 0) {
@@ -158,7 +159,7 @@ if ( !defined($cmd) ) {
         $pattern = $ARGV[1]
     }
     my $msg = "Executing commands based on the distro $distro";
-    $msg .= " (in $root)" if (($OSCAR::Env::oscar_verbose >= 5) && defined $root);
+    $msg .= " (in $root)" if ($pm->{Verbosity} >= 5) && defined $root);
     oscar_log(5, INFO, "$msg");
     my ($rc, @output);
     if ($cmd eq "install") {
