@@ -1,3 +1,6 @@
+packman-3.4:
+- Add support for verbosity in PackMan
+
 packman-3.3.5:
 - Bugfix: Better handling of failures in chrooted environment.
 -         Make sure we unmount what has been mounted in image before
