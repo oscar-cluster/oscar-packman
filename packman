@@ -43,6 +43,7 @@ GetOptions(
         "help"                          => \&help_and_exit,
         ) || help_and_die();
 
+# BUG: OL IMHO not needed anymore.
 if($verbose) {
     $OSCAR::Env::oscar_verbose = 5;
     $ENV{PACKMAN_VERBOSE} = 5;
@@ -121,7 +122,9 @@ if ( !defined($cmd) ) {
         oscar_log(1, ERROR, "Unknown binary package format (".$os->{pkg});
         exit 1;
     }
-    
+
+    $pm->setverbose($verbose);
+
     if (!defined $pm) {
         oscar_log(1, ERROR, "Unable to create a PackMan object");
         exit 1;
@@ -130,7 +133,6 @@ if ( !defined($cmd) ) {
         oscar_log(1, ERROR, "Impossible to specify the distro of the PackMan object");
         exit 1;
     }
-    $pm->verbosity($verbose);
     oscar_log(5, INFO, "".$pm->status());
     if (defined $root) {
         if ($pm->chroot($root) == 0) {
@@ -159,7 +161,7 @@ if ( !defined($cmd) ) {
         $pattern = $ARGV[1]
     }
     my $msg = "Executing commands based on the distro $distro";
-    $msg .= " (in $root)" if ($pm->{Verbosity} >= 5) && defined $root);
+    $msg .= " (in $root)" if (($pm->{Verbosity} >= 5) && defined $root);
     oscar_log(5, INFO, "$msg");
     my ($rc, @output);
     if ($cmd eq "install") {

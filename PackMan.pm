@@ -39,7 +39,7 @@ $VERSION = "r" . q$Rev$ =~ /(\d+)/;
 # see below
 my @preference;
 
-my $verbose = $ENV{PACKMAN_VERBOSE};
+#my $verbose = $ENV{PACKMAN_VERBOSE};
 
 # populated by BEGIN block with keys usable in @preference and values of
 # where each PackMan module is located
@@ -258,7 +258,7 @@ sub distro {
     }
 }
 
-sub verbose {
+sub setverbose {
     ref (my $self = shift) or croak "verbose is an instance method";
     if (@_) {
         my $verbosity = shift;
@@ -1341,7 +1341,7 @@ sub rpm_pkg_data_to_hash ($@) {
         $conflicts, $isdesc, $dist);
     my %o;
 
-    OSCAR::Utils::print_array (@output) if $verbose;
+    OSCAR::Utils::print_array (@output) if ($self->{Verbosity} >= 5);
     my @tokens;
 
     for (my $i=0; $i < scalar (@output); $i++) {
