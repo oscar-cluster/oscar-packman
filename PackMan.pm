@@ -262,6 +262,7 @@ sub setverbose {
     ref (my $self = shift) or croak "verbose is an instance method";
     if (@_) {
         my $verbosity = shift;
+	$verbosity=0 if (not defined($verbosity));
 	$verbosity !~ /^\d+$/ && croak "verbose must be a number";
 	$self->{Verbosity} = $verbosity;
     } else {
@@ -281,7 +282,7 @@ sub status {
         if defined $repo_ref;
     $str .= "\tList of repos: ". join(", ", @$repo_ref) . "\n"
         if (defined $repo_ref && scalar (@$repo_ref) > 0);
-    $str .= "\tVerbosity level: ".$self->{Verbosity}";
+    $str .= "\tVerbosity level: ".$self->{Verbosity};
     return $str;
 }
 

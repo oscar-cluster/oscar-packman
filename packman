@@ -123,7 +123,11 @@ if ( !defined($cmd) ) {
         exit 1;
     }
 
-    $pm->setverbose($verbose);
+    # If -v flag is used, $verbose is defined and equals 1.
+    # In that case, we use level 5 for log messages
+    # BUG: level sghould be the count of -v flags.
+    $pm->setverbose(5) if($verbose);
+    $pm->setverbose(10) if($debug);
 
     if (!defined $pm) {
         oscar_log(1, ERROR, "Unable to create a PackMan object");
