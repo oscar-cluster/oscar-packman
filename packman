@@ -79,6 +79,7 @@ if ($prepare_repo) {
     my $pm = OSCAR::PackageSmart::prepare_pool ($prepare_repo);
     if (!defined $pm) {
         oscar_log(1, ERROR, "Impossible to prepare the repository $prepare_repo");
+	exit 1;
     } else {
         oscar_log(1, INFO, "Repository $prepare_repo is now ready.");
     }
@@ -168,6 +169,7 @@ if ( !defined($cmd) ) {
     $msg .= " (in $root)" if (($pm->{Verbosity} >= 5) && defined $root);
     oscar_log(5, INFO, "$msg");
     my ($rc, @output);
+    $rc = 0;
     if ($cmd eq "install") {
         oscar_log(5, INFO, "Packages to install: " . join (", ", @pkgs));
         ($rc, @output) = $pm->smart_install(@pkgs);
@@ -204,8 +206,9 @@ if ( !defined($cmd) ) {
         OSCAR::Utils::print_array (@data);
     } else {
         oscar_log(1, ERROR, "Unsupported command ($cmd)");
+	$rc = -1;
     }
-    exit 0;
+    exit $rc;
 }
 
 sub help () {
