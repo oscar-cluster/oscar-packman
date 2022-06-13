@@ -4,7 +4,7 @@
 Summary:		A package and dependency manager abstraction layer.
 Name:      		packman
 Version:   		3.4
-Release:   		1%{?dist}
+Release:   		2%{?dist}
 Vendor:			Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:		OSCAR
 Packager:		Olivier Lahaye <olivier.lahaye@cea.fr>
@@ -60,7 +60,9 @@ interface.
 %{perl_vendorlib}/OSCAR/PackMan/RPM.pm
 
 %changelog
-* Sat May 14 2022 Olivier Lahaye <olivier.lahaye@cea.fr> 3.4
+* Mon Jun 13 2022 Olivier Lahaye <olivier.lahaye@cea.fr> 3.4-2
+- adapt deps to new oscar package
+* Sat May 14 2022 Olivier Lahaye <olivier.lahaye@cea.fr> 3.4-1
 - New version with verbosity support in PackMan
 * Sun May 31 2020 Olivier Lahaye <olivier.lahaye@cea.fr> 3.3.5-1
 - Bugfix release (handle errors when bootstrapping immage)
