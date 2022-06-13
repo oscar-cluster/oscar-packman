@@ -24,7 +24,7 @@ BuildRequires:		perl(Pod::Man)
 
 # createrepo used by yume --prepare. dep is here because yume doesn't have this requirement
 # indeed, yume on nodes don't need --prepare associated requirements.
-Requires:       	oscar-base-lib, yume >= 2.8.2, createrepo, rapt
+Requires:       	liboscar-server >= 6.3, yume >= 2.8.2, createrepo, rapt
 
 %description
 A collection of Perl object modules for use in the OSCAR framework (among
