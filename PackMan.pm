@@ -515,7 +515,7 @@ sub do_simple_command {
             #
             # child
             #
-            exec ("$command $cl")
+            exec ("LC_ALL=C $command $cl")
                 or return (PM_ERROR, "can't exec program ($command $cl): $!");
         }
     } else {
@@ -553,7 +553,7 @@ sub do_simple_command {
                 #
                 my $line = $cl;
                 $line =~ s/#args/$package/g;
-                exec ("$command $line") 
+                exec ("LC_ALL= C $command $line") 
                     or return (PM_ERROR, "can't exec program ($command $cl): $!");
             }
         }
