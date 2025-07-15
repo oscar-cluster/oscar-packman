@@ -27,9 +27,6 @@ use OSCAR::Utils;
 use OSCAR::Env;
 use OSCAR::Logger;
 use OSCAR::LoggerDefs;
-use v5.10.1; # Given/When
-# Avoid smartmatch warnings when using given
-no if $] >= 5.017011, warnings => 'experimental::smartmatch';
 
 our $VERSION;
 $VERSION = "r" . q$Rev$ =~ /(\d+)/;
@@ -662,47 +659,37 @@ sub smart_image_bootstrap($$) {
         my @arguments = split(/\s+/, $line);
         my $command = shift(@arguments);
 
-        given ($command) {
-            when ("bind") { # Mount a filesystem from host in the image
-                if (! -d $arguments[0]) {
-                    oscar_log(1, ERROR, "Can't mount $arguments[0] into image: No such directory.");
-                    close (BOOTSTRAP);
-                    return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
-                }
-                my $mnt_point = $arguments[0];
-                push (@bind, $mnt_point);
-            }
-            when ("del") { # Remove files from image.
-                push (@del, @arguments);
-            }
-            when ("path") { # Supports multiple path to create at once.
-                push (@mkdir, @arguments);
-            }
-            when ("copy") { # Supports multiple files to copy at once.
-                push (@copy, @arguments);
-            }
-            when ("pkgs") {
-                push (@pkgs, @arguments);
-            }
-            when ("post") {
-                push (@post, @arguments);
-            }
-            when ("pre") {
-                push (@pre, @arguments);
-            }
-            when ("unbind") { # Unmount a filesystem relative to the image path.
-                if (! -d $self->{ChRoot}.$arguments[0]) {
-                    oscar_log(1, ERROR, "Can't unmount $arguments[0] from image: No such directory.");
-                    close (BOOTSTRAP);
-                    return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
-                }
-                push (@unbind, $arguments[0]);
-            }
-            default {
-                oscar_log(1, ERROR, "Unknown instruction'$command' in $bootstrap_instructions line: $line_nb");
+        if ($command eq "bind") { # Mount a filesystem from host in the image
+            if (! -d $arguments[0]) {
+                oscar_log(1, ERROR, "Can't mount $arguments[0] into image: No such directory.");
                 close (BOOTSTRAP);
                 return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
             }
+            my $mnt_point = $arguments[0];
+            push (@bind, $mnt_point);
+        } elsif ($command eq "del") { # Remove files from image.
+            push (@del, @arguments);
+        } elsif ($command eq "path") { # Supports multiple path to create at once.
+            push (@mkdir, @arguments);
+        } elsif ($command eq "copy") { # Supports multiple files to copy at once.
+            push (@copy, @arguments);
+        } elsif ($command eq "pkgs") {
+            push (@pkgs, @arguments);
+        } elsif ($command eq "post") {
+            push (@post, @arguments);
+        } elsif ($command eq "pre") {
+            push (@pre, @arguments);
+        } elsif ($command eq "unbind") { # Unmount a filesystem relative to the image path.
+            if (! -d $self->{ChRoot}.$arguments[0]) {
+                oscar_log(1, ERROR, "Can't unmount $arguments[0] from image: No such directory.");
+                close (BOOTSTRAP);
+                return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
+            }
+            push (@unbind, $arguments[0]);
+        } else {
+            oscar_log(1, ERROR, "Unknown instruction'$command' in $bootstrap_instructions line: $line_nb");
+            close (BOOTSTRAP);
+            return(PM_ERROR, "Failed to bootstrap image: $self->{ChRoot}");
         }
     }
     close (BOOTSTRAP);
